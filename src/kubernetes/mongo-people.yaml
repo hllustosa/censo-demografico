@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb-people
+spec:
+  serviceName: mongodb-people
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb-people
+  template:
+    metadata:
+      labels:
+        app: mongodb-people
+        selector: mongodb-people
+    spec:
+      containers:
+      - name: mongodb-people
+        image: mongo:4.0.8
+        env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            value: guest
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            value: guest
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-people-service
+  labels:
+    app: mongodb-people
+spec:
+  clusterIP: None
+  selector:
+    app: mongodb-people
