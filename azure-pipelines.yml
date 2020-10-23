@@ -1,0 +1,44 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+- task: AzureCLI@2
+  displayName: Azure CLI
+  inputs:
+    azureSubscription: azrm
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: az aks show --name census-k8s  --resource-group Census
+
+- task: AzureCLI@2
+  displayName: Get Credentials
+  inputs:
+    azureSubscription: azrm
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: az aks get-credentials --name census-k8s --resource-group Census
+
+- task: AzureCLI@2
+  displayName: ACR Login
+  inputs:
+    azureSubscription: azrm
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: az acr login --name hermanohub
+
+- script: docker pull hermanohub.azurecr.io/census.people
+  displayName: test kubectl
+
+- script: kubectl get nodes
+  displayName: test kubectl
