@@ -13,16 +13,9 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: AzureCLI@2
-  displayName: Azure CLI
-  inputs:
-    azureSubscription: azrm
-    scriptType: bash
-    scriptLocation: inlineScript
-    inlineScript: az aks show --name census-k8s  --resource-group Census
 
 - task: AzureCLI@2
-  displayName: Get Credentials
+  displayName: Get Kubectl Credentials
   inputs:
     azureSubscription: azrm
     scriptType: bash
@@ -30,15 +23,25 @@ steps:
     inlineScript: az aks get-credentials --name census-k8s --resource-group Census
 
 - task: AzureCLI@2
-  displayName: ACR Login
+  displayName: Do ACR Login
   inputs:
     azureSubscription: azrm
     scriptType: bash
     scriptLocation: inlineScript
     inlineScript: az acr login --name hermanohub
 
-- script: docker pull hermanohub.azurecr.io/census.people
-  displayName: test kubectl
+- script: docker -f docker build --file People.Test.Dockerfile --tag people.test ./src/microservices
+  displayName: Build Test Docker for People Microservice
 
-- script: kubectl get nodes
-  displayName: test kubectl
+- script: docker run people.test
+  displayName: Test People Microservice
+
+- script: docker build -f People.Dockerfile -t census.people ./src/microservices
+  displayName: Build Docker for People Microservice
+
+- script: docker build -f People.Dockerfile -t hermanohub.azurecr.io/census.people ./src/microservices
+  displayName: Build Docker for People Microservice
+
+- script: docker push hermanohub.azurecr.io/census.people
+  displayName: Push Docker for People Microservice
+
