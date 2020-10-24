@@ -30,7 +30,7 @@ steps:
     scriptLocation: inlineScript
     inlineScript: az acr login --name hermanohub
 
-- script: docker -f docker build --file People.Test.Dockerfile --tag people.test ./src/microservices
+- script: docker build --file People.Test.Dockerfile --tag people.test ./src/microservices
   displayName: Build Test Docker for People Microservice
 
 - script: docker run people.test
