@@ -16,9 +16,12 @@ namespace Census.People.Infra.Repository
 
         IMongoConnection MongoConnection { get; set; }
 
-        public PersonRepository(IMongoConnection mongoConnection)
+        IGuidGenerator GuidGenerator { get; set; }
+
+        public PersonRepository(IMongoConnection mongoConnection, IGuidGenerator guidGenerator)
         {
             MongoConnection = mongoConnection;
+            GuidGenerator = guidGenerator;
         }
 
         public async Task<PageResult<Person>> GetPeople(int page, string nameFilter)
@@ -101,9 +104,9 @@ namespace Census.People.Infra.Repository
             return builder.Regex("name", "^" + search + ".*");
         }
 
-        private static string CreateId()
+        private string CreateId()
         {
-            return Guid.NewGuid().ToString();
+            return GuidGenerator.GenerateGuid();
         }
 
         private static bool HasDefinedNameFilter(string nameFilter)

@@ -1,4 +1,5 @@
 ﻿using Census.People.Domain.Values;
+using System;
 
 namespace Census.People.Domain.Entities
 {
@@ -30,6 +31,11 @@ namespace Census.People.Domain.Entities
                    Education == person.Education &&
                    FatherId == person.FatherId &&
                    MotherId == person.MotherId;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Id, Name, Sex, Race, Education, FatherId, MotherId);
         }
     }
 }

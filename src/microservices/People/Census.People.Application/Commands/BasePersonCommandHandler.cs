@@ -19,8 +19,6 @@ namespace Census.People.Application.Commands
 
         public async Task Validate(Person person)
         {
-            await CheckIfExists(person.Id, "Id");
-
             if (HasDefinedFather(person))
                 await CheckIfExists(person.FatherId, "FatherId");
 
