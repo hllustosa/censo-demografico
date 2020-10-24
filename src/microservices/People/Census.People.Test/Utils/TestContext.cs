@@ -52,7 +52,7 @@ namespace Census.People.Test.Utils
             return await Client.PutAsync(url, contentString);
         }
 
-        public async Task<HttpResponseMessage> Delete(string url, string token)
+        public async Task<HttpResponseMessage> Delete(string url)
         {
             return await Client.DeleteAsync(url);
         }

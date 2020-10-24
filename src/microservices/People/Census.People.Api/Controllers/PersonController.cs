@@ -51,17 +51,19 @@ namespace Census.People.Api.Controllers
 
         // PUT api/values/5
         [HttpPut("{id}")]
-        public async void Put(string id, [FromBody] UpdatePersonCommand command)
+        public async Task<IActionResult> Put(string id, [FromBody] UpdatePersonCommand command)
         {
             command.Id = id;
             await Mediator.Send(command);
+            return Ok();
         }
 
         // DELETE api/values/5
         [HttpDelete("{id}")]
-        public async void Delete(string id)
+        public async Task<IActionResult> Delete(string id)
         {
             await Mediator.Send(new DeletePersonCommand() { Id = id});
+            return NoContent();
         }
     }
 }
