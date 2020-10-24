@@ -42,6 +42,6 @@ steps:
 - script: docker push hermanohub.azurecr.io/census.people
   displayName: Push Docker for People Microservice
 
-- script: kubectl delete --ignore-not-found -f people.yaml && kubectl apply -f people.yaml
+- script: kubectl delete --ignore-not-found -f ./src/kubernetes/people.yaml && kubectl apply -f ./src/kubernetes/people.yaml
   displayName: Deploy to Kubernets Cluster
   
