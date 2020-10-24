@@ -36,9 +36,12 @@ steps:
 - script: docker run people.test
   displayName: Test People Microservice
 
-- script: docker build -f ./src/microservices/People.Dockerfile -t census.people ./src/microservices
+- script: docker build -f ./src/microservices/People.Dockerfile -t hermanohub.azurecr.io/census.people ./src/microservices
   displayName: Build Docker for People Microservice
 
 - script: docker push hermanohub.azurecr.io/census.people
   displayName: Push Docker for People Microservice
 
+- script: kubectl delete --ignore-not-found -f people.yaml && kubectl apply -f people.yaml
+  displayName: Deploy to Kubernets Cluster
+  
