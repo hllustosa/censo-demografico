@@ -45,7 +45,7 @@ namespace Census.Shared.Bus.Implementation
         public void Publish(IntegrationEvent @event)
         {
             ConnectToBroker();
-            RetryPolicy policy = CreateRetryPolicy(@event);
+            var policy = CreateRetryPolicy(@event);
 
             var eventName = @event.GetType().Name;
             using (var channel = PersistentConnection.CreateModel())
@@ -53,7 +53,7 @@ namespace Census.Shared.Bus.Implementation
                 var message = JsonConvert.SerializeObject(@event);
                 var body = Encoding.UTF8.GetBytes(message);
 
-                policy.Execute(() =>
+                policy.ExecuteAsync(() =>
                 {
                     var properties = channel.CreateBasicProperties();
                     properties.DeliveryMode = PERSISTENT_MODE;
@@ -66,6 +66,8 @@ namespace Census.Shared.Bus.Implementation
                         mandatory: true,
                         basicProperties: properties,
                         body: body);
+
+                    return Task.CompletedTask;
                 });
             }
         }
@@ -150,11 +152,11 @@ namespace Census.Shared.Bus.Implementation
             }
         }
     
-        private RetryPolicy CreateRetryPolicy(IntegrationEvent @event)
+        private AsyncRetryPolicy CreateRetryPolicy(IntegrationEvent @event)
         {
             return RetryPolicy.Handle<BrokerUnreachableException>()
                 .Or<SocketException>()
-                .WaitAndRetry(RetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+                .WaitAndRetryAsync(RetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                 {
                     Logger.LogWarning(ex, "Não foi possível publicar o evento: {EventId} após {Timeout}s ({ExceptionMessage})", 
                         @event.Id, $"{time.TotalSeconds:n1}", ex.Message);
