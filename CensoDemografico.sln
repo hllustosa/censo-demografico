@@ -59,6 +59,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Census.Statistics.Applicati
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Census.People.Api", "src\microservices\People\Census.People.Api\Census.People.Api.csproj", "{22E70E3D-9FC1-4BB4-8D3B-2B4E3F4B8CD7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Census.FamilyTree.Application", "src\microservices\FamilyTree\Census.FamilyTree.Application\Census.FamilyTree.Application.csproj", "{26E53FFD-5060-4305-AD1F-DD6D2DF40FAC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -145,6 +147,10 @@ Global
 		{22E70E3D-9FC1-4BB4-8D3B-2B4E3F4B8CD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22E70E3D-9FC1-4BB4-8D3B-2B4E3F4B8CD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22E70E3D-9FC1-4BB4-8D3B-2B4E3F4B8CD7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26E53FFD-5060-4305-AD1F-DD6D2DF40FAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26E53FFD-5060-4305-AD1F-DD6D2DF40FAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26E53FFD-5060-4305-AD1F-DD6D2DF40FAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26E53FFD-5060-4305-AD1F-DD6D2DF40FAC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -177,6 +183,7 @@ Global
 		{A6C5B4CA-6F5B-402F-AE43-2716DDD62844} = {862BB091-E7B4-427E-97B2-D89AE0A7161F}
 		{1D9EA1CD-2A0E-4F98-A56B-F81750AD80EE} = {862BB091-E7B4-427E-97B2-D89AE0A7161F}
 		{22E70E3D-9FC1-4BB4-8D3B-2B4E3F4B8CD7} = {4F5CD923-6F57-4DC0-80A6-CD8C69C823DD}
+		{26E53FFD-5060-4305-AD1F-DD6D2DF40FAC} = {48D7C362-DEBC-4340-94CA-C07FC088D459}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {953007A2-FCCF-4B2D-B6F8-81EC91825191}

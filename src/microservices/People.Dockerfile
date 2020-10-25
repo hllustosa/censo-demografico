@@ -10,5 +10,5 @@ RUN dotnet publish -c Release -o /app/out ./People/Census.People.Api
 FROM mcr.microsoft.com/dotnet/core/aspnet:2.2
 WORKDIR /app
 COPY --from=build-env /app/out .
-RUN mv appsettings.Development.json appsettings.json
+RUN mv prod.appsettings.json appsettings.json
 ENTRYPOINT ["dotnet", "Census.People.Api.dll"]

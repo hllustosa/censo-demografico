@@ -2,6 +2,7 @@
 using Census.People.Domain.Entities;
 using Census.People.Domain.Interfaces;
 using Census.People.Domain.Values;
+using Census.Shared.Bus.Interfaces;
 using FluentValidation;
 using Moq;
 using System.Threading;
@@ -16,9 +17,11 @@ namespace Census.People.Test.Unit
 
         private readonly Mock<IPersonRepository> PersonRepository = new Mock<IPersonRepository>();
 
+        private readonly Mock<IEventBus> EventBus = new Mock<IEventBus>();
+
         public TestUpdatePersonCommand()
         {
-            UpdateCommandHandler = new UpdatePersonHandler(PersonRepository.Object);
+            UpdateCommandHandler = new UpdatePersonHandler(PersonRepository.Object, EventBus.Object);
         }
 
         [Fact]
@@ -92,6 +95,10 @@ namespace Census.People.Test.Unit
                 Sex = Sex.FEMALE,
                 FatherId = "2",
                 MotherId = "3",
+                Address = new Address()
+                {
+                    City = "City",
+                }
             };
         }
     }

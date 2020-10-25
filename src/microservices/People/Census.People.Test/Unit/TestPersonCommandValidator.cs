@@ -58,7 +58,7 @@ namespace Census.People.Test.Unit
             //Arrange
             var validator = new PersonCommandValidator();
             CreatePersonCommand createCommand = MakeCommand();
-            createCommand.Sex = 'S';
+            createCommand.Sex = "S";
 
             //Act
             var result = await validator.ValidateAsync(createCommand);

@@ -66,12 +66,12 @@ namespace Census.People.Application.Commands
                 Id = person.Id,
                 Address = new AddressDTO()
                 {
-                    AddressDesc = person.Address.AddressDesc,
-                    Burrow = person.Address.Burrow,
-                    City = person.Address.City,
-                    Complement = person.Address.Complement,
-                    State = person.Address.State,
-                    ZipCode = person.Address.ZipCode,
+                    AddressDesc = person.Address?.AddressDesc,
+                    Burrow = person.Address?.Burrow,
+                    City = person.Address?.City,
+                    Complement = person.Address?.Complement,
+                    State = person.Address?.State,
+                    ZipCode = person.Address?.ZipCode,
                 },
                 Education = person.Education,
                 FatherId = person.FatherId,

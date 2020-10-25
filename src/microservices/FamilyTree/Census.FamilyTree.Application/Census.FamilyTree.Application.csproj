@@ -4,8 +4,4 @@
     <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Neo4j.Driver" Version="4.1.1" />
-  </ItemGroup>
-
 </Project>

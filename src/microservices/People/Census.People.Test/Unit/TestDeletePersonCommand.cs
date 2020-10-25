@@ -1,6 +1,7 @@
 ﻿using Census.People.Application.Commands;
 using Census.People.Domain.Entities;
 using Census.People.Domain.Interfaces;
+using Census.Shared.Bus.Interfaces;
 using FluentValidation;
 using Moq;
 using System.Threading;
@@ -15,9 +16,11 @@ namespace Census.People.Test.Unit
 
         private readonly Mock<IPersonRepository> PersonRepository = new Mock<IPersonRepository>();
 
+        private readonly Mock<IEventBus> EventBus = new Mock<IEventBus>();
+
         public TestDeletePersonCommand()
         {
-            DeletePersonHandler = new DeletePersonHandler(PersonRepository.Object);
+            DeletePersonHandler = new DeletePersonHandler(PersonRepository.Object, EventBus.Object);
         }
 
         [Fact]
