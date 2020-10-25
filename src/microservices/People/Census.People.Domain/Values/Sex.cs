@@ -4,15 +4,15 @@ namespace Census.People.Domain.Values
 {
     public class Sex
     {
-        public static readonly char MALE = 'M';
+        public static readonly string MALE = "M";
 
-        public static readonly char FEMALE = 'F';
+        public static readonly string FEMALE = "F";
 
-        public static readonly char UNDEFINED = 'I';
+        public static readonly string UNDEFINED = "I";
 
-        public static IEnumerable<char> Values()
+        public static IEnumerable<string> Values()
         {
-            return new List<char>()
+            return new List<string>()
             {
                 MALE,
                 FEMALE,

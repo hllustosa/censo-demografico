@@ -8,7 +8,7 @@ namespace Census.People.Application.Commands
 
         public string Name { get; set; }
 
-        public char Sex { get; set; }
+        public string Sex { get; set; }
 
         public string Race { get; set; }
 

@@ -9,7 +9,7 @@ namespace Census.People.Domain.Entities
 
         public string Name { get; set; }
 
-        public char Sex { get; set; }
+        public string Sex { get; set; }
 
         public string Race { get; set; }
 

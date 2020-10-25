@@ -1,5 +1,6 @@
 ﻿using Census.People.Domain.Entities;
 using Census.People.Domain.Interfaces;
+using Census.Shared.Bus.Event;
 using FluentValidation;
 using FluentValidation.Results;
 using System;
@@ -56,6 +57,29 @@ namespace Census.People.Application.Commands
         private static bool HasDefinedFather(Person person)
         {
             return !String.IsNullOrEmpty(person.FatherId);
+        }
+
+        protected static PersonDTO ToDTO(Person person)
+        {
+            return new PersonDTO()
+            {
+                Id = person.Id,
+                Address = new AddressDTO()
+                {
+                    AddressDesc = person.Address.AddressDesc,
+                    Burrow = person.Address.Burrow,
+                    City = person.Address.City,
+                    Complement = person.Address.Complement,
+                    State = person.Address.State,
+                    ZipCode = person.Address.ZipCode,
+                },
+                Education = person.Education,
+                FatherId = person.FatherId,
+                MotherId = person.MotherId,
+                Name = person.Name,
+                Race = person.Race,
+                Sex = person.Sex
+            };
         }
     }
 }

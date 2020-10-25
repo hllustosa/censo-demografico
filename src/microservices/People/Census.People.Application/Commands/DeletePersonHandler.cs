@@ -1,4 +1,7 @@
-﻿using Census.People.Domain.Interfaces;
+﻿using Census.People.Domain.Entities;
+using Census.People.Domain.Interfaces;
+using Census.Shared.Bus.Event;
+using Census.Shared.Bus.Interfaces;
 using FluentValidation;
 using FluentValidation.Results;
 using MediatR;
@@ -8,27 +11,33 @@ using System.Threading.Tasks;
 
 namespace Census.People.Application.Commands
 {
-    public class DeletePersonHandler : IRequestHandler<DeletePersonCommand>
-    { 
+    public class DeletePersonHandler : BasePersonCommandHandler, IRequestHandler<DeletePersonCommand>
+    {
         IPersonRepository PersonRepository { get; set; }
 
-        public DeletePersonHandler(IPersonRepository personRepository)
+        IEventBus EventBus { get; set; }
+
+        public DeletePersonHandler(IPersonRepository personRepository, IEventBus eventBus) : base(personRepository)
         {
             PersonRepository = personRepository;
+            EventBus = eventBus;
         }
 
         public async Task<Unit> Handle(DeletePersonCommand request, CancellationToken cancellationToken)
         {
             await CheckIfExists(request.Id, "Id");
+            var person = await PersonRepository.GetPersonById(request.Id);
             await PersonRepository.Delete(request.Id);
+            EventBus.Publish(CreateEvent(person));
             return Unit.Value;
         }
 
-        private async Task CheckIfExists(string id, string field)
+        private PersonDeletedEvent CreateEvent(Person person)
         {
-            var person = await PersonRepository.GetPersonById(id);
-            if (person == null) throw new ValidationException(
-                new List<ValidationFailure>() { new ValidationFailure(field, "Valor Inválido") });
+            return new PersonDeletedEvent()
+            {
+                Person = ToDTO(person)
+            };
         }
     }
 }
