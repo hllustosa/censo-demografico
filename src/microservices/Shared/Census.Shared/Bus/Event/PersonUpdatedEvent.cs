@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Census.Shared.Bus.Event
+﻿namespace Census.Shared.Bus.Event
 {
     public class PersonUpdatedEvent : IntegrationEvent
     {
+        public PersonDTO OldPersonData { get; set; }
 
+        public PersonDTO NewPersonData { get; set; }
     }
 }

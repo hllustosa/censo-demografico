@@ -16,33 +16,32 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Census.Statistics.Api
 {
-    public class Startup
+    public class TestStartup
     {
-        public Startup(IConfiguration configuration)
+        public TestStartup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
+
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMediatR(typeof(BaseEventHandler).Assembly);
             services.AddTransient<IMongoConnection, MongoConnection>();
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-            services.AddTransient<IGuidGenerator, GuidGenerator>();
 
             services.AddTransient<ITransactionManager, MongoTransactionManager>();
             services.AddTransient<IPersonCategoryRepository, PersonCategoryRepository>();
             services.AddTransient<IPersonPerCityCounterRepository, PersonPerCityCounterRepository>();
 
-            services.AddEventBus(Configuration);
+            services.AddTransient<IEventBus, MockBus>();
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 
-        
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, IEventBus eventBus)
+
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -55,11 +54,29 @@ namespace Census.Statistics.Api
 
             app.UseHttpsRedirection();
             app.UseMvc();
+        }
+    }
 
-            //Subscribing to events
-            eventBus.Subscribe<PersonCreatedEvent, PersonCreatedEventHandler>();
-            eventBus.Subscribe<PersonUpdatedEvent, PersonUpdatedEventHandler>();
-            eventBus.Subscribe<PersonDeletedEvent, PersonDeletedEventHandler>();
+
+    public class MockBus : IEventBus
+    {
+        public void Publish(IntegrationEvent @event)
+        {
+
+        }
+
+        public void Subscribe<T, TH>()
+            where T : IntegrationEvent
+            where TH : IIntegrationEventHandler<T>
+        {
+
+        }
+
+        public void Unsubscribe<T, TH>()
+            where T : IntegrationEvent
+            where TH : IIntegrationEventHandler<T>
+        {
+
         }
     }
 }

@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Census.People.Application.Behaviour;
+﻿using Census.People.Application.Behaviour;
 using MediatR;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;

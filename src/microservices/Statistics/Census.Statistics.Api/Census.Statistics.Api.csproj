@@ -6,13 +6,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MediatR" Version="9.0.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.2.4" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\Census.Shared\Census.Shared.csproj" />
+    <ProjectReference Include="..\Census.Statistics.Application\Census.Statistics.Application.csproj" />
     <ProjectReference Include="..\Census.Statistics.Domain\Census.Statistics.Domain.csproj" />
+    <ProjectReference Include="..\Census.Statistics.Infra\Census.Statistics.Infra.csproj" />
   </ItemGroup>
 
 </Project>

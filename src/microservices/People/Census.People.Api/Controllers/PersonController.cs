@@ -15,12 +15,9 @@ namespace Census.People.Api.Controllers
     {
         readonly IMediator Mediator;
 
-        readonly IEventBus EvtBus;
-
-        public PersonController(IMediator mediator, IEventBus evtBus)
+        public PersonController(IMediator mediator)
         {
             Mediator = mediator;
-            EvtBus = evtBus;
         }
 
         // GET api/values
@@ -36,8 +33,6 @@ namespace Census.People.Api.Controllers
         public async Task<ActionResult<Person>> Get(string id)
         {
             var result = await Mediator.Send(new PersonByIdQuery() { Id = id });
-
-            EvtBus.Publish(new PersonCreatedEvent() { Message = id });
             return Ok(result);
         }
 

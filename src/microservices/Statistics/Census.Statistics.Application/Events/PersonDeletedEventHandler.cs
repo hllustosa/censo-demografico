@@ -3,12 +3,11 @@ using Census.Shared.Bus.Interfaces;
 using Census.Statistics.Domain.Entities;
 using Census.Statistics.Domain.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Census.Statistics.Application.Events
 {
-    public class PersonCreatedEventHandler : BaseEventHandler, IIntegrationEventHandler<PersonCreatedEvent>
+    public class PersonDeletedEventHandler : BaseEventHandler, IIntegrationEventHandler<PersonDeletedEvent>
     {
         IPersonCategoryRepository PersonCategoryRepository { get; set; }
 
@@ -18,8 +17,8 @@ namespace Census.Statistics.Application.Events
 
         ITransaction Transaction { get; set; }
 
-        public PersonCreatedEventHandler(IPersonCategoryRepository personCategoryRepository, 
-            IPersonPerCityCounterRepository personPerCityCounterRepository, 
+        public PersonDeletedEventHandler(IPersonCategoryRepository personCategoryRepository,
+            IPersonPerCityCounterRepository personPerCityCounterRepository,
             ITransactionManager transactionManager)
         {
             PersonCategoryRepository = personCategoryRepository;
@@ -27,8 +26,8 @@ namespace Census.Statistics.Application.Events
             TransactionManager = transactionManager;
         }
 
-        public async Task Handle(PersonCreatedEvent @event)
-        { 
+        public async Task Handle(PersonDeletedEvent @event)
+        {
             var person = @event.Person;
             var filter = CreateFilter(person);
             Transaction = TransactionManager.BeginTransaction();
@@ -39,7 +38,7 @@ namespace Census.Statistics.Application.Events
                 await HandleCityCounters(person, filter);
                 TransactionManager.CommitTransaction(Transaction);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 TransactionManager.RollBackTransaction(Transaction);
                 throw e;
@@ -49,7 +48,7 @@ namespace Census.Statistics.Application.Events
         private async Task HandleCategoryCounters(PersonCategoryFilter filter)
         {
             var personCategory = await FindGategory(filter);
-            IncrementCategoryCounters(filter, personCategory);
+            DecrementCategoryCounters(filter, personCategory);
             await PersonCategoryRepository.Save(Transaction, personCategory);
         }
 
@@ -57,7 +56,7 @@ namespace Census.Statistics.Application.Events
         {
             var city = person.Address.City;
             var personPerCityCategory = await PersonPerCityCounterRepository.GetByCity(city);
-            IncrementPerCityCounters(filter, personPerCityCategory);
+            DecrementPerCityCounters(filter, personPerCityCategory);
             await PersonPerCityCounterRepository.Save(Transaction, personPerCityCategory);
         }
 

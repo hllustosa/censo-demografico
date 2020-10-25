@@ -6,9 +6,9 @@ namespace Census.People.Infra.Connection
 {
     public class MongoConnection : IMongoConnection
     {
-        readonly string MONGO_DATABASE = "PeopleDb";
+        readonly string MONGO_DATABASE = "peopledb";
 
-        readonly string MONGO_COLLECTION = "People";
+        readonly string MONGO_COLLECTION = "people";
 
         MongoClient MongoClient { get; set; }
 

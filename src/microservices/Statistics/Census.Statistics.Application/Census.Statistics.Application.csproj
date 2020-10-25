@@ -5,7 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MediatR" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Shared\Census.Shared\Census.Shared.csproj" />
+    <ProjectReference Include="..\Census.Statistics.Domain\Census.Statistics.Domain.csproj" />
   </ItemGroup>
 
 </Project>

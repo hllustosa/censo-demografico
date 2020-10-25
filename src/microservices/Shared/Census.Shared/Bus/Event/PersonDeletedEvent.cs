@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Census.Shared.Bus.Event
+﻿namespace Census.Shared.Bus.Event
 {
     public class PersonDeletedEvent : IntegrationEvent
     {
-
+        public PersonDTO Person { get; set; }
     }
 }
