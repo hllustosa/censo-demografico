@@ -12,8 +12,8 @@ namespace Census.Shared.Bus
         public static void AddEventBus(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddConnectionFactory(configuration);
-            services.AddTransient<IEventBusSubscriptionsManager, RabbitMQSubscriptionManager>();
-            services.AddTransient<IEventBus, RabbitMQEventBus>();
+            services.AddSingleton<IEventBusSubscriptionsManager, RabbitMQSubscriptionManager>();
+            services.AddSingleton<IEventBus, RabbitMQEventBus>();
         }
 
         public static void AddConnectionFactory(this IServiceCollection services, IConfiguration configuration)

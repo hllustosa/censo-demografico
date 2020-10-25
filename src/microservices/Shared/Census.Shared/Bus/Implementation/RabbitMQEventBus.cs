@@ -23,6 +23,7 @@ namespace Census.Shared.Bus.Implementation
         private readonly IPersistentConnection PersistentConnection;
         private readonly IEventBusSubscriptionsManager SubscriptionManager;
         private readonly ILogger<RabbitMQEventBus> Logger;
+        private readonly IService­Provider Service­Provider;
         private readonly String QueueName;
         private readonly int RetryCount;
 
@@ -32,11 +33,13 @@ namespace Census.Shared.Bus.Implementation
             IEventBusSubscriptionsManager subscriptionManager,
             ILogger<RabbitMQEventBus> logger,
             IConfiguration configuration,
+            IService­Provider service­Provider,
             int retryCount = 5)
         {
             QueueName = configuration.GetSection("RabbitMqConnection")["QueueName"];
             PersistentConnection = persistentConnection;
             SubscriptionManager = subscriptionManager;
+            Service­Provider = service­Provider;
             Logger = logger;
             RetryCount = retryCount;
             ConsumerChannel = CreateConsumerChannel();
@@ -141,7 +144,9 @@ namespace Census.Shared.Bus.Implementation
             var subscriptions = SubscriptionManager.GetHandlersForEvent(eventName);    
             foreach (var subscription in subscriptions)
             {
-                var handler = Activator.CreateInstance(subscription.HandlerType);
+                //var handler = Activator.CreateInstance(subscription.HandlerType);
+                //var handler = UnityManager.Resolve(subscription.HandlerType);
+                var handler = Service­Provider.GetService(subscription.HandlerType);
                 var method = subscription.HandlerType.GetMethod("Handle");
                 var eventType = SubscriptionManager.GetEventTypeByName(eventName);
                 var integrationEvent = (IntegrationEvent)JsonConvert.DeserializeObject(message, eventType);

@@ -37,6 +37,11 @@ namespace Census.Statistics.Api
             services.AddTransient<IPersonCategoryRepository, PersonCategoryRepository>();
             services.AddTransient<IPersonPerCityCounterRepository, PersonPerCityCounterRepository>();
 
+            services.AddTransient<PersonCreatedEventHandler>();
+            services.AddTransient<PersonDeletedEventHandler>();
+            services.AddTransient<PersonUpdatedEventHandler>();
+
+
             services.AddEventBus(Configuration);
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
