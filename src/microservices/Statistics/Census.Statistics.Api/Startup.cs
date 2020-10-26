@@ -30,7 +30,7 @@ namespace Census.Statistics.Api
         {
             services.AddMediatR(typeof(BaseEventHandler).Assembly);
             services.AddTransient<IMongoConnection, MongoConnection>();
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehaviour<,>));
             services.AddTransient<IGuidGenerator, GuidGenerator>();
 
             services.AddTransient<ITransactionManager, MongoTransactionManager>();

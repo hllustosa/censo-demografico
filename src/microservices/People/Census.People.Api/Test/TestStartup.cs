@@ -32,7 +32,7 @@ namespace Census.People.Api
             services.AddMediatR(typeof(ValidatorAssembly).Assembly);
             services.AddTransient<IMongoConnection, MongoConnection>();
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehaviour<,>));
             services.AddTransient<IPersonRepository, PersonRepository>();
             services.AddTransient<IEventBus, MockBus>();
             services.AddTransient<IGuidGenerator, MockGuidGenerator>();

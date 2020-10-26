@@ -4,4 +4,13 @@
     <TargetFramework>netcoreapp2.2</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Census.Shared\Census.Shared.csproj" />
+    <ProjectReference Include="..\Census.FamilyTree.Domain\Census.FamilyTree.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="9.0.0" />
+  </ItemGroup>
+
 </Project>

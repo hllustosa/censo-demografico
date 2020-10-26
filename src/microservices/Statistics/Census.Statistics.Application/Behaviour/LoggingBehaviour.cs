@@ -6,12 +6,12 @@ using Newtonsoft.Json;
 
 namespace Census.Statistics.Application.Behaviour
 {
-    public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    public class LoggingBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
       where TRequest : IRequest<TResponse>
     {
-        private readonly ILogger<LoggingBehavior<TRequest, TResponse>> Logger;
+        private readonly ILogger<LoggingBehaviour<TRequest, TResponse>> Logger;
 
-        public LoggingBehavior(ILogger<LoggingBehavior<TRequest, TResponse>> logger)
+        public LoggingBehaviour(ILogger<LoggingBehaviour<TRequest, TResponse>> logger)
         {
             Logger = logger;
         }

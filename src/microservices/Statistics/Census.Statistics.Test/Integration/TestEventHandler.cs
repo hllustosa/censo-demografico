@@ -127,7 +127,7 @@ namespace Census.Statistics.Test.Integration
             return new PersonDTO()
             {
                 Name = "João",
-                Sex = 'M',
+                Sex = "M",
                 Education = "Ensino Médio",
                 Race = "Pardo(a)",
                 Address = new AddressDTO()
@@ -143,7 +143,7 @@ namespace Census.Statistics.Test.Integration
             return new PersonDTO()
             {
                 Name = "João",
-                Sex = 'M',
+                Sex = "M",
                 Education = "Ensino Fundamental",
                 Race = "Branco(a)",
                 Address = new AddressDTO()

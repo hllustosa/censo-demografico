@@ -29,7 +29,7 @@ namespace Census.People.Api
             services.AddTransient<IMongoConnection, MongoConnection>();
             services.AddTransient<IGuidGenerator, GuidGenerator>();
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestValidationBehavior<,>));
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehaviour<,>));
             services.AddTransient<IPersonRepository, PersonRepository>();
             services.AddEventBus(Configuration);
 
