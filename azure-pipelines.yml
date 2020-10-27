@@ -73,7 +73,7 @@ steps:
 - script: docker push hermanohub.azurecr.io/census.familytree
   displayName: Push Docker for Family Microservice
 
-  script: docker push hermanohub.azurecr.io/census.front
+- script: docker push hermanohub.azurecr.io/census.front
   displayName: Push Docker for Frontend
 
 - script: kubectl delete --ignore-not-found -f ./src/kubernetes/people.yaml && kubectl apply -f ./src/kubernetes/people.yaml
