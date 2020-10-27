@@ -1,0 +1,20 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Debug"
+    }
+  },
+  "AllowedHosts": "*",
+  "Neo4j": {
+    "Uri": "http://neo4j:7474/db/data",
+    "Username": "neo4j",
+    "Password": "test"
+  },
+  "RabbitMqConnection": {
+    "HostName": "rabbitmq",
+    "Username": "guest",
+    "Password": "guest",
+    "QueueName": "tree",
+    "retryCount": 5
+  }
+}
