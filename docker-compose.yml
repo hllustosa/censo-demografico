@@ -1,0 +1,79 @@
+version: '3.7'
+services:
+  mongo:
+    image: 'mongo:latest'
+    container_name: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: guest
+      MONGO_INITDB_ROOT_PASSWORD: guest
+    ports:
+      - '27017:27017'
+    networks: 
+      - net
+  neo4j:
+    image: 'neo4j:3.5'
+    container_name: neo4j
+    restart: always
+    environment:
+      NEO4J_AUTH: neo4j/test
+    ports:
+      - '7474:7474'
+      - '7687:7687'
+    networks: 
+      - net
+  rabbitmq:
+    image: 'rabbitmq:3-management-alpine'
+    container_name: rabbitmq
+    restart: always
+    volumes:
+      - '/docker/rabbitmq/data:/var/lib/rabbitmq'
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks: 
+      - net
+  people:
+    build:
+      context: ./src/microservices
+      dockerfile: People.Dockerfile
+    container_name: people
+    restart: always
+    ports:
+      - '5001:80'
+    networks: 
+      - net
+  family:
+    build:
+      context: ./src/microservices
+      dockerfile: FamilyTree.Dockerfile
+    container_name: family
+    restart: always
+    ports:
+      - '5002:80'
+    networks: 
+      - net
+  stats:
+    build:
+      context: ./src/microservices
+      dockerfile: Statistics.Dockerfile
+    container_name: stats
+    restart: always
+    ports:
+      - '5003:80'
+    networks: 
+      - net
+  address:
+    build:
+      context: ./src/microservices
+      dockerfile: Address.Dockerfile
+    container_name: address
+    restart: always
+    ports:
+      - '5004:80'
+    networks: 
+      - net
+
+networks:
+  net:
+    name: census

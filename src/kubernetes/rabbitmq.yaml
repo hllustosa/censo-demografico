@@ -30,7 +30,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: rabbitmq-service
+  name: rabbitmq
 spec:
   clusterIP: None
   ports:
@@ -51,17 +51,17 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: rabbitmq
+  name: rabbitmq-k8s
 spec:
   selector:
     matchLabels:
-      app: "rabbitmq"
-  serviceName: rabbitmq-service 
+      app: "rabbitmq-k8s"
+  serviceName: rabbitmq 
   template:
     metadata:
-      name: rabbitmq
+      name: rabbitmq-k8s
       labels:
-        app: rabbitmq
+        app: rabbitmq-k8s
     spec:
       initContainers:
       volumes:
@@ -73,7 +73,7 @@ spec:
         runAsUser: 999
         runAsGroup: 999
       containers:
-      - name: rabbitmq
+      - name: rabbitmq-k8s
         # Community Docker Image
         image: rabbitmq:latest
         volumeMounts:

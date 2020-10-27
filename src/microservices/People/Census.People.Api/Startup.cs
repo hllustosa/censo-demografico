@@ -32,7 +32,6 @@ namespace Census.People.Api
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehaviour<,>));
             services.AddTransient<IPersonRepository, PersonRepository>();
             services.AddEventBus(Configuration);
-
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<ValidatorAssembly>());
         }
@@ -50,6 +49,7 @@ namespace Census.People.Api
             }
 
             app.UseHttpsRedirection();
+            app.UseCors(option => option.AllowAnyOrigin());
             app.UseMvc();
         }
     }

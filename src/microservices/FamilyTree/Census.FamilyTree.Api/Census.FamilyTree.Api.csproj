@@ -6,8 +6,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="MediatR" Version="9.0.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Census.FamilyTree.Application\Census.FamilyTree.Application.csproj" />
+    <ProjectReference Include="..\Census.FamilyTree.Domain\Census.FamilyTree.Domain.csproj" />
+    <ProjectReference Include="..\Census.FamilyTree.Infra\Census.FamilyTree.Infra.csproj" />
   </ItemGroup>
 
 </Project>

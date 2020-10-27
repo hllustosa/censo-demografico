@@ -41,7 +41,6 @@ namespace Census.Statistics.Api
             services.AddTransient<PersonDeletedEventHandler>();
             services.AddTransient<PersonUpdatedEventHandler>();
 
-
             services.AddEventBus(Configuration);
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
@@ -59,7 +58,9 @@ namespace Census.Statistics.Api
             }
 
             app.UseHttpsRedirection();
+            app.UseCors(option => option.AllowAnyOrigin());
             app.UseMvc();
+            
 
             //Subscribing to events
             eventBus.Subscribe<PersonCreatedEvent, PersonCreatedEventHandler>();

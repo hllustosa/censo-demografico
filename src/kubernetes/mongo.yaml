@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: mongodb-people
+  name: mongodb
 spec:
-  serviceName: mongodb-people
+  serviceName: mongodb
   replicas: 1
   selector:
     matchLabels:
-      app: mongodb-people
+      app: mongodb
   template:
     metadata:
       labels:
-        app: mongodb-people
-        selector: mongodb-people
+        app: mongodb
+        selector: mongodb
     spec:
       containers:
-      - name: mongodb-people
+      - name: mongodb
         image: mongo:4.0.8
         env:
           - name: MONGO_INITDB_ROOT_USERNAME
@@ -27,10 +27,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: mongodb-people-service
+  name: mongo
   labels:
-    app: mongodb-people
+    app: mongodb
 spec:
   clusterIP: None
   selector:
-    app: mongodb-people
+    app: mongodb

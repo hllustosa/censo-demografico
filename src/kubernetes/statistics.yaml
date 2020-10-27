@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: census-statistics
+spec:
+  selector:
+    matchLabels:
+      app: census-statistics
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: census-statistics
+    spec:
+      containers:
+      - name: census-statistics
+        image: hermanohub.azurecr.io/census.statistics
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: statistics-service
+  labels:
+    app:  census-statistics
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: census-statistics

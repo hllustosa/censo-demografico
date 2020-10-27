@@ -5,16 +5,14 @@
     }
   },
   "AllowedHosts": "*",
-  "Neo4j": {
-    "Uri": "bolt://localhost:7687",
-    "Username": "neo4j",
-    "Password": "test"
+  "ConnectionStrings": {
+    "DefaultConnection": "mongodb://localhost:27017"
   },
   "RabbitMqConnection": {
     "HostName": "localhost",
     "Username": "guest",
     "Password": "guest",
-    "QueueName": "tree",
+    "QueueName": "statistics",
     "retryCount": 5
   }
 }

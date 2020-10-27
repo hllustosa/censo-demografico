@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: neo
+spec:
+  serviceName: neo
+  replicas: 1
+  selector:
+    matchLabels:
+      app: neo
+  template:
+    metadata:
+      labels:
+        app: neo
+        selector: neo
+    spec:
+      containers:
+      - name: neo
+        image: neo4j:3.5
+        env:
+          - name: NEO4J_AUTH
+            value: neo4j/test
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: neo4j
+  labels:
+    app: neo
+spec:
+  clusterIP: None
+  ports:
+  - name: p1
+    port: 7474
+    targetPort: 7474
+  - name: p2
+    port: 7687
+    targetPort: 7687
+  selector:
+    app: neo

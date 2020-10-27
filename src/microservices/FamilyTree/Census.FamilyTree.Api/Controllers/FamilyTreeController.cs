@@ -17,7 +17,7 @@ namespace Census.FamilyTree.Api.Controllers
             Mediator = mediator;
         }
 
-        [HttpGet("id")]
+        [HttpGet("{id}")]
         public async Task<ActionResult<PersonFamilyTree>> GetAsync(string id, [FromQuery]uint level)
         {
             var result = await Mediator.Send(new FamilyTreeQuery() { PersonId = id, Level = level  });
