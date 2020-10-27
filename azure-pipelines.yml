@@ -25,6 +25,9 @@ steps:
     scriptLocation: inlineScript
     inlineScript: az acr login --name hermanohub
 
+- script: npm run build --prefix ./src/frontend/Census.WebApp/ClientApp 
+  displayName: Build Frontend App
+  
 - script: docker network create test && docker run -d -p 27017-27019:27017-27019 --net=test --name mongo mongo:latest
   displayName: Init Mongo Container
 
@@ -33,9 +36,6 @@ steps:
 
 - script: docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 --net=test rabbitmq:3-management
   displayName: Init RabbitMQ Container
-
-- script: curl -sL https://deb.nodesource.com/setup_12.x | bash - && apt-get install -y nodejs
-  displayName: Install Node
 
 - script: docker build --file ./src/microservices/People.Test.Dockerfile --tag people.test ./src/microservices
   displayName: Build Test Docker for People Microservice
@@ -63,9 +63,6 @@ steps:
 
 - script: docker build -f ./src/microservices/FamilyTree.Dockerfile -t hermanohub.azurecr.io/census.familytree --build-arg prod="prod" ./src/microservices
   displayName: Build Docker for FamilyTree Microservice
-
-- script: npm run build --prefix ./src/frontend/Census.WebApp/ClientApp 
-  displayName: Build Frontend App
 
 - script: docker build -f ./src/frontend/Census.WebApp/Dockerfile -t hermanohub.azurecr.io/census.front ./src/frontend/Census.WebApp
   displayName: Build Docker for Frontend
