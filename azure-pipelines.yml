@@ -57,13 +57,13 @@ steps:
 - script: docker run --net=test family.test
   displayName: Test FamilyTree Microservice
 
-- script: docker build -f ./src/microservices/People.Dockerfile -t hermanohub.azurecr.io/census.people -build-arg prod="prod" ./src/microservices
+- script: docker build -f ./src/microservices/People.Dockerfile -t hermanohub.azurecr.io/census.people --build-arg prod="prod" ./src/microservices
   displayName: Build Docker for People Microservice
 
-- script: docker build -f ./src/microservices/Statistics.Dockerfile -t hermanohub.azurecr.io/census.statistics -build-arg prod="prod" ./src/microservices
+- script: docker build -f ./src/microservices/Statistics.Dockerfile -t hermanohub.azurecr.io/census.statistics --build-arg prod="prod" ./src/microservices
   displayName: Build Docker for Statistics Microservice
 
-- script: docker build -f ./src/microservices/FamilyTree.Dockerfile -t hermanohub.azurecr.io/census.familytree -build-arg prod="prod" ./src/microservices
+- script: docker build -f ./src/microservices/FamilyTree.Dockerfile -t hermanohub.azurecr.io/census.familytree --build-arg prod="prod" ./src/microservices
   displayName: Build Docker for FamilyTree Microservice
 
 - script: docker push hermanohub.azurecr.io/census.people
