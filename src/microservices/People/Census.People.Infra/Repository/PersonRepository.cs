@@ -100,8 +100,7 @@ namespace Census.People.Infra.Repository
 
         private static FilterDefinition<Person> BuildFilter(string search)
         {
-            var builder = Builders<Person>.Filter;
-            return builder.Regex("name", "^" + search + ".*");
+            return Builders<Person>.Filter.Where(item => item.Name.Contains(search));
         }
 
         private string CreateId()
