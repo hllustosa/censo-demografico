@@ -27,7 +27,7 @@ namespace Census.FamilyTree.Infra.Connection
 
         public static Neo4jConnection Create()
         {
-            var uri = "http://localhost:7474/db/data";
+            var uri = "http://neo4j:7474/db/data";
             var userName = "neo4j";
             var password = "test";
             var graphClient = new GraphClient(new Uri(uri), userName, password);

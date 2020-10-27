@@ -25,7 +25,7 @@ namespace Census.Statistics.Test.Integration
 
         public TestEventHandler()
         {
-            Connection = new MongoConnection("mongodb://localhost:27017");
+            Connection = new MongoConnection("mongodb://mongo:27017");
             GuidGenerator = new GuidGenerator();
             PersonCategoryRepository = new PersonCategoryRepository(Connection, GuidGenerator);
             PersonPerCityCounterRepository = new PersonPerCityCounterRepository(Connection, GuidGenerator);
