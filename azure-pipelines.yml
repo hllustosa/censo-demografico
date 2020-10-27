@@ -30,10 +30,10 @@ steps:
     scriptLocation: inlineScript
     inlineScript: az acr login --name hermanohub
 
-  script: docker network test && docker run -d -p 27017-27019:27017-27019 --net=test --name mongo mongo:latest
+- script: docker network test && docker run -d -p 27017-27019:27017-27019 --net=test --name mongo mongo:latest
   displayName: Init Mongo Container
 
-  script: docker run --name testneo4j -p7474:7474 -p7687:7687 -d --net=test --env NEO4J_AUTH=neo4j/test neo4j:3.5
+- script: docker run --name testneo4j -p7474:7474 -p7687:7687 -d --net=test --env NEO4J_AUTH=neo4j/test neo4j:3.5
   displayName: Init Neo4j Container
 
 - script: docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 --net=test rabbitmq:3-management
@@ -69,18 +69,18 @@ steps:
 - script: docker push hermanohub.azurecr.io/census.people
   displayName: Push Docker for People Microservice
 
-  script: docker push hermanohub.azurecr.io/census.statistics
+- script: docker push hermanohub.azurecr.io/census.statistics
   displayName: Push Docker for Statistics Microservice
 
-  script: docker push hermanohub.azurecr.io/census.familytree
+- script: docker push hermanohub.azurecr.io/census.familytree
   displayName: Push Docker for Census Microservice
 
 - script: kubectl delete --ignore-not-found -f ./src/kubernetes/people.yaml && kubectl apply -f ./src/kubernetes/people.yaml
   displayName: Deploy People Microservice to Kubernetes Cluster
 
-  script: kubectl delete --ignore-not-found -f ./src/kubernetes/statistics.yaml && kubectl apply -f ./src/kubernetes/statistics.yaml
+- script: kubectl delete --ignore-not-found -f ./src/kubernetes/statistics.yaml && kubectl apply -f ./src/kubernetes/statistics.yaml
   displayName: Deploy Statistics Microservice to Kubernetes Cluster
 
-  script: kubectl delete --ignore-not-found -f ./src/kubernetes/family.yaml && kubectl apply -f ./src/kubernetes/family.yaml
+- script: kubectl delete --ignore-not-found -f ./src/kubernetes/family.yaml && kubectl apply -f ./src/kubernetes/family.yaml
   displayName: Deploy FamilyTree Microservice to Kubernetes Cluster
   
