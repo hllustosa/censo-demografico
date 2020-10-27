@@ -25,7 +25,7 @@ steps:
     scriptLocation: inlineScript
     inlineScript: az acr login --name hermanohub
 
-- script: npm run build --prefix ./src/frontend/Census.WebApp/ClientApp 
+- script: npm install --prefix ./src/frontend/Census.WebApp/ClientApp && npm run build --prefix ./src/frontend/Census.WebApp/ClientApp 
   displayName: Build Frontend App
   
 - script: docker network create test && docker run -d -p 27017-27019:27017-27019 --net=test --name mongo mongo:latest
