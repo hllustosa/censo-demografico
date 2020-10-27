@@ -14,6 +14,7 @@ using Census.Shared.Bus;
 using Census.Shared.Bus.Interfaces;
 using Microsoft.Extensions.Primitives;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Census.People.Api
 {

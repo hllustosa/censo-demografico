@@ -22,9 +22,9 @@ namespace Census.People.Api.Controllers
 
         // GET api/values
         [HttpGet]
-        public async Task<ActionResult<PageResult<Person>>> Get([FromQuery] int page, [FromQuery] string nameFilter)
+        public async Task<ActionResult<PageResult<Person>>> Get([FromQuery] int page, [FromQuery] string name)
         {
-            var result = await Mediator.Send(new PeopleQuery() { Page = page, NameFilter = nameFilter});
+            var result = await Mediator.Send(new PeopleQuery() { Page = page, NameFilter = name});
             return Ok(result);
         }
 

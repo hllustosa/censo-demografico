@@ -45,7 +45,7 @@ namespace Census.Shared.Bus.Implementation
             ConsumerChannel = CreateConsumerChannel();
         }
 
-        public void Publish(IntegrationEvent @event)
+        public async void Publish(IntegrationEvent @event)
         {
             ConnectToBroker();
             var policy = CreateRetryPolicy(@event);
@@ -56,7 +56,7 @@ namespace Census.Shared.Bus.Implementation
                 var message = JsonConvert.SerializeObject(@event);
                 var body = Encoding.UTF8.GetBytes(message);
 
-                policy.ExecuteAsync(() =>
+                await policy.ExecuteAsync(() =>
                 {
                     var properties = channel.CreateBasicProperties();
                     properties.DeliveryMode = PERSISTENT_MODE;
@@ -74,8 +74,6 @@ namespace Census.Shared.Bus.Implementation
                 });
             }
         }
-
-       
 
         public void Subscribe<T, TH>()
             where T : IntegrationEvent
@@ -144,8 +142,6 @@ namespace Census.Shared.Bus.Implementation
             var subscriptions = SubscriptionManager.GetHandlersForEvent(eventName);    
             foreach (var subscription in subscriptions)
             {
-                //var handler = Activator.CreateInstance(subscription.HandlerType);
-                //var handler = UnityManager.Resolve(subscription.HandlerType);
                 var handler = Service­Provider.GetService(subscription.HandlerType);
                 var method = subscription.HandlerType.GetMethod("Handle");
                 var eventType = SubscriptionManager.GetEventTypeByName(eventName);

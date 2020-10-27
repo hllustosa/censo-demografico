@@ -57,7 +57,7 @@ services:
     build:
       context: ./src/microservices
       dockerfile: Statistics.Dockerfile
-    container_name: stats
+    container_name: statistics
     restart: always
     ports:
       - '5003:80'
@@ -73,7 +73,16 @@ services:
       - '5004:80'
     networks: 
       - net
-
+  front:
+    build:
+      context: ./src/frontend/Census.WebApp
+      dockerfile: Dockerfile
+    container_name: frontend
+    restart: always
+    ports:
+      - '8080:8080'
+    networks: 
+      - net
 networks:
   net:
     name: census

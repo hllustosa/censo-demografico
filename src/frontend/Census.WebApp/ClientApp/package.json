@@ -1,28 +1,35 @@
 {
-  "name": "Censo.WebApp",
+  "name": "census",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "bootstrap": "^4.3.1",
-    "jquery": "3.3.1",
+    "@fortawesome/fontawesome-svg-core": "^1.2.30",
+    "@fortawesome/free-solid-svg-icons": "^5.14.0",
+    "@fortawesome/react-fontawesome": "^0.1.11",
+    "@material-ui/core": "^4.11.0",
+    "@material-ui/icons": "^4.9.1",
+    "@material-ui/lab": "^4.0.0-alpha.56",
+    "axios": "^0.20.0",
+    "bootstrap": "^4.1.3",
+    "font-awesome": "^4.7.0",
+    "jquery": "^3.4.1",
+    "merge": "^1.2.1",
+    "oidc-client": "^1.9.0",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
+    "react-redux": "^7.2.1",
     "react-router-bootstrap": "^0.24.4",
     "react-router-dom": "^4.2.2",
-    "react-scripts": "^1.1.5",
+    "react-scripts": "^3.0.1",
     "reactstrap": "^6.3.0",
-    "rimraf": "^2.6.2"
+    "redux": "^4.0.5",
+    "redux-oidc": "^4.0.0-beta1"
   },
   "devDependencies": {
-    "ajv": "^6.0.0",
-    "babel-eslint": "^7.2.3",
+    "ajv": "^6.9.1",
     "cross-env": "^5.2.0",
-    "eslint": "^4.1.1",
-    "eslint-config-react-app": "^2.1.0",
-    "eslint-plugin-flowtype": "^2.50.3",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-jsx-a11y": "^5.1.1",
-    "eslint-plugin-react": "^7.11.1"
+    "rimraf": "^2.7.1",
+    "typescript": "^3.5.2"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -33,5 +40,17 @@
     "test": "cross-env CI=true react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "lint": "eslint ./src/"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
