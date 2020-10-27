@@ -22,7 +22,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: statistics-service
+  name: statistics
   labels:
     app:  census-statistics
 spec:

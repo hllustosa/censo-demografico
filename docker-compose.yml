@@ -37,6 +37,8 @@ services:
     build:
       context: ./src/microservices
       dockerfile: People.Dockerfile
+      args:
+        prod: prod
     container_name: people
     restart: always
     ports:
@@ -47,6 +49,8 @@ services:
     build:
       context: ./src/microservices
       dockerfile: FamilyTree.Dockerfile
+      args:
+        prod: prod
     container_name: family
     restart: always
     ports:
@@ -57,20 +61,12 @@ services:
     build:
       context: ./src/microservices
       dockerfile: Statistics.Dockerfile
+      args:
+        prod: prod
     container_name: statistics
     restart: always
     ports:
       - '5003:80'
-    networks: 
-      - net
-  address:
-    build:
-      context: ./src/microservices
-      dockerfile: Address.Dockerfile
-    container_name: address
-    restart: always
-    ports:
-      - '5004:80'
     networks: 
       - net
   front:

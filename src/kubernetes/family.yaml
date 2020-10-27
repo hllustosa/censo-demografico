@@ -22,7 +22,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: family-service
+  name: family
   labels:
     app:  census-family
 spec:

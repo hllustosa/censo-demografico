@@ -19,13 +19,7 @@ namespace Census.Statistics.Infra.Connection
         {
             var conventionPack = new ConventionPack { new IgnoreExtraElementsConvention(true) };
             ConventionRegistry.Register("IgnoreExtraElements", conventionPack, type => true);
-
             MongoClient = new MongoClient(configuration.GetConnectionString("DefaultConnection"));
-        }
-
-        public MongoConnection(string connectionString)
-        {
-            MongoClient = new MongoClient(connectionString);
         }
 
         public MongoClient GetClient()

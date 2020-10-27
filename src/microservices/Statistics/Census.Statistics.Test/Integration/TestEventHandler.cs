@@ -5,6 +5,7 @@ using Census.Statistics.Domain.Entities;
 using Census.Statistics.Domain.Interfaces;
 using Census.Statistics.Infra.Connection;
 using Census.Statistics.Infra.Repository;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
 using Xunit;
@@ -25,7 +26,8 @@ namespace Census.Statistics.Test.Integration
 
         public TestEventHandler()
         {
-            Connection = new MongoConnection("mongodb://mongo:27017");
+            var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+            Connection = new MongoConnection(config);
             GuidGenerator = new GuidGenerator();
             PersonCategoryRepository = new PersonCategoryRepository(Connection, GuidGenerator);
             PersonPerCityCounterRepository = new PersonPerCityCounterRepository(Connection, GuidGenerator);

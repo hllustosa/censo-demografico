@@ -20,21 +20,6 @@ namespace Census.FamilyTree.Infra.Connection
             
         }
 
-        private Neo4jConnection(GraphClient graphClient)
-        {
-            GraphClient = graphClient;
-        }
-
-        public static Neo4jConnection Create()
-        {
-            var uri = "http://neo4j:7474/db/data";
-            var userName = "neo4j";
-            var password = "test";
-            var graphClient = new GraphClient(new Uri(uri), userName, password);
-
-            return new Neo4jConnection(graphClient);
-        }
-
         public async Task<GraphClient> GetClient()
         {
             if (!GraphClient.IsConnected)
