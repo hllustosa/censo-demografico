@@ -30,7 +30,7 @@ steps:
     scriptLocation: inlineScript
     inlineScript: az acr login --name hermanohub
 
-- script: docker network test && docker run -d -p 27017-27019:27017-27019 --net=test --name mongo mongo:latest
+- script: docker network create test && docker run -d -p 27017-27019:27017-27019 --net=test --name mongo mongo:latest
   displayName: Init Mongo Container
 
 - script: docker run --name testneo4j -p7474:7474 -p7687:7687 -d --net=test --env NEO4J_AUTH=neo4j/test neo4j:3.5
