@@ -15,3 +15,16 @@ body {
 .vis-network:focus{
   outline: none;
 }
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 0px 10px;
+  grid-template-areas:
+    "main main main right"
+    "main main main right"
+    "main main main right";
+}
+.main { grid-area: main; }
+.right { grid-area: right; }

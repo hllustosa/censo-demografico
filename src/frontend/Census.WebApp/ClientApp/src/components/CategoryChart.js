@@ -1,50 +1,61 @@
 import React from "react";
 import { withStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
-import { ResponsiveContainer, PieChart, Pie, Legend, Tooltip } from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { shuffle } from "../data/Utils";
+import { Typography } from "@material-ui/core";
 
 const styles = () => ({
   root: {
     width: "calc(100% - 20px)",
     height: "35vh",
     padding: "10px",
-    marginLeft: "10px",
-    marginRight: "10px",
+    //marginLeft: "10px",
+    //marginRight: "10px",
     outline: "none",
   },
 });
 
-const data01 = [
-    { name: 'Group A', value: 400 }, { name: 'Group B', value: 300 },
-    { name: 'Group C', value: 300 }, { name: 'Group D', value: 200 },
-    { name: 'Group E', value: 278 }, { name: 'Group F', value: 189 },
-  ];
-  
-  const data02 = [
-    { name: 'Group A', value: 2400 }, { name: 'Group B', value: 4567 },
-    { name: 'Group C', value: 1398 }, { name: 'Group D', value: 9800 },
-    { name: 'Group E', value: 3908 }, { name: 'Group F', value: 4800 },
-  ];
+const COLORS = [
+  "#5d89a8",
+  "#77ba99",
+  "#ef9738",
+  "#97d1fa",
+  "#a45f6e",
+  "#9d02d7",
+];
+
+const renderLabel = function (entry) {
+  return entry.name;
+};
 
 function CategoryChart(props) {
   const { classes } = props;
+  const colors = COLORS;
 
   return (
     <Paper className={classes.root}>
-      <ResponsiveContainer>
-        <PieChart>
-          <Pie
-            dataKey="value"
-            isAnimationActive={false}
-            data={data01}
-            outerRadius={80}
-            innerRadius={40}
-            fill="#8884d8"
-            label
-          />
-          <Tooltip />
-        </PieChart>
-      </ResponsiveContainer>
+      <Typography>{props.title}</Typography>
+      {props.data && (
+        <ResponsiveContainer>
+          <PieChart>
+            <Pie
+              dataKey="value"
+              isAnimationActive={false}
+              data={props.data}
+              outerRadius={80}
+              innerRadius={40}
+              fill="#8884d8"
+              label={renderLabel}
+            >
+              {props.data.map((entry, index) => (
+                <Cell fill={colors[index % colors.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
     </Paper>
   );
 }
