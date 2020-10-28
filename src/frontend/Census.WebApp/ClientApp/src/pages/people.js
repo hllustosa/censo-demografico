@@ -19,6 +19,7 @@ import { handleErrorResponse } from "../data/Utils";
 import Title from "../components/Title";
 import DetailsIcon from "../components/DetailsIcon";
 import DeleteIcon from "../components/DeleteIcon";
+import TreeIcon from "../components/TreeIcon";
 import ConfirmationModal from "../components/ConfirmationModal";
 import PersonForm from "../components/PersonForm";
 import Tree from "../components/TreeModal";
@@ -69,16 +70,7 @@ function People(props) {
     return (
       <TableRow hover key={`row-person-${index}`}>
         <StyledTableCell component="th" scope="row">
-          <a
-            className={classes.link}
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              setSelectedPerson(row);
-            }}
-          >
-            {row.name}
-          </a>
+          {row.name}
         </StyledTableCell>
         <StyledTableCell component="th" scope="row">
           {row.sex}
@@ -90,7 +82,7 @@ function People(props) {
           {row.education}
         </StyledTableCell>
         <StyledTableCell style={{ width: 30 }}>
-          <DetailsIcon
+          <TreeIcon
             onClick={() => {
               setSelectedPerson(row);
               setShowTree(true);

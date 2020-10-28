@@ -43,7 +43,7 @@ spec:
     protocol: TCP
     targetPort: 25672
   selector:
-    app: rabbitmq
+    app: rabbitmq-k8s
   type: ClusterIP
   sessionAffinity: None
 
