@@ -10,7 +10,7 @@ export default function DeleteIcon(props) {
   };
 
   return (
-    <a style={{color: "#566787" }} href="#" onClick={clickHandler}>
+    <a style={{color: "#566787" }} href="/#" onClick={clickHandler}>
       <FontAwesomeIcon icon={faProjectDiagram} />
     </a>
   );

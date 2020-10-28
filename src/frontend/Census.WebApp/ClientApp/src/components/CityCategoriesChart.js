@@ -7,37 +7,21 @@ import {
   Bar,
   XAxis,
   YAxis,
-  Tooltip
+  Tooltip,
 } from "recharts";
-import { shuffle } from "../data/Utils";
 import { Typography, TextField, MenuItem } from "@material-ui/core";
 
 const styles = () => ({
   root: {
-    width: "calc(100% - 40px)",
+    width: "calc(100% - 20px)",
     height: "calc(100% - 20px)",
     padding: "10px",
     outline: "none",
   },
 });
 
-const COLORS = [
-  "#5d89a8",
-  "#77ba99",
-  "#ef9738",
-  "#97d1fa",
-  "#a45f6e",
-  "#9d02d7",
-];
-
-const renderLabel = function (entry) {
-  return entry.name;
-};
-
 function CityCategoriesChart(props) {
   const { classes } = props;
-  const colors = shuffle(COLORS);
-
   const height =
     props.data.length < 6 ? props.data.length * 45 : props.data.length * 25;
 
@@ -48,19 +32,19 @@ function CityCategoriesChart(props) {
       <TextField
         fullWidth
         select
-        style={{marginTop: "10px", marginBottom: "25px"}}
+        style={{ marginTop: "10px", marginBottom: "25px" }}
         id="city"
         label="Cidade"
         size="small"
         variant="outlined"
-        onChange={e => {
-            props.onCityChange(e.target.value);
+        onChange={(e) => {
+          props.onCityChange(e.target.value);
         }}
       >
         {props.cities.map((city, index) => (
-            <MenuItem key={`city-${index}`} value={city}>
-                {city}
-            </MenuItem>
+          <MenuItem key={`city-${index}`} value={city}>
+            {city}
+          </MenuItem>
         ))}
       </TextField>
 
@@ -93,7 +77,7 @@ function CityCategoriesChart(props) {
                 dataKey="name"
                 tickLine={false}
               />
-               <Tooltip />
+              <Tooltip />
             </BarChart>
           </ResponsiveContainer>
         </div>

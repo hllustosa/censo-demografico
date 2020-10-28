@@ -1,5 +1,5 @@
 import React from "react";
-import { GetPeople, GetPerson } from "../data/People";
+import { GetPeople } from "../data/People";
 import TextField from "@material-ui/core/TextField";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -10,7 +10,6 @@ export default function Asynchronous(props) {
   const [open, setOpen] = React.useState(false);
   const [options, setOptions] = React.useState([]);
   const [value, setValue] = React.useState("");
-  const [defaultValue, setDefaultValue] = React.useState({});
   const [searchValue, setSearchValue] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 

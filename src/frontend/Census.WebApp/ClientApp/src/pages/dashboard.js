@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import withBasePage from "./base-page";
 import Grid from "@material-ui/core/Grid";
 import TextField from "@material-ui/core/TextField";
 import MenuItem from "@material-ui/core/MenuItem";
 import { withStyles } from "@material-ui/core/styles";
-
 import CategoryChart from "../components/CategoryChart";
 import NumberDisplay from "../components/NumberDisplay";
 import CityCategoriesChart from "../components/CityCategoriesChart";
 import { GetStats, GetCities, GetStatsPerCity } from "../data/PeopleStats";
+import { SetUpSignair } from "../data/Utils";
 
 const styles = (theme) => ({
   root: {
@@ -65,11 +65,11 @@ function count(data) {
 }
 
 function processPerCityData(data) {
-  const perCityData = []
+  const perCityData = [];
   const nameCounters = data.personNameCounters;
 
   for (const key of Object.keys(nameCounters)) {
-    perCityData.push({name: key, value: nameCounters[key].count})
+    perCityData.push({ name: key, value: nameCounters[key].count });
   }
   return perCityData;
 }
@@ -96,18 +96,30 @@ function Dashboard(props) {
     setSelectedCity(city);
   };
 
-  React.useEffect(() => {
+  const setCategoryData = (response) => {
+    setSexData(processData(response.data, "sex"));
+    setRaceData(processData(response.data, "race"));
+    setEducationData(processData(response.data, "schoolLevel"));
+    setPeopleCount(count(response.data));
+  };
+
+  function getData() {
     GetStats(personFilter)
       .then((response) => {
-        setSexData(processData(response.data, "sex"));
-        setRaceData(processData(response.data, "race"));
-        setEducationData(processData(response.data, "schoolLevel"));
-        setPeopleCount(count(response.data));
+        setCategoryData(response);
         return GetCities();
       })
       .then((response) => {
         setCities(response.data);
       });
+  };
+
+  React.useEffect(() => {
+    async function Initialize() {
+      await SetUpSignair(getData);
+      getData();
+    }
+    Initialize();
   }, []);
 
   React.useEffect(() => {
@@ -118,14 +130,12 @@ function Dashboard(props) {
 
   React.useEffect(() => {
     GetStats(personFilter).then((response) => {
-      setSexData(processData(response.data, "sex"));
-      setRaceData(processData(response.data, "race"));
-      setEducationData(processData(response.data, "schoolLevel"));
-      setPeopleCount(count(response.data));
+      setCategoryData(response);
     });
   }, [personFilter]);
 
   const { classes } = props;
+
   return (
     <div className={classes.root}>
       <Grid

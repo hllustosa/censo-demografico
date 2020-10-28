@@ -54,7 +54,7 @@ function TreeModal(props) {
     GetFamilyTree(person.id, level).then((response) => {
       setTreeData(CreateTreeData(response.data));
     });
-  }, [level]);
+  }, [level, person]);
 
   const handleClose = () => {
     if (props.handleClose) props.handleClose();

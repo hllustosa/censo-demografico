@@ -131,8 +131,8 @@ const useStyles2 = makeStyles({
 
 export default function CompleteTable(props) {
   const classes = useStyles2();
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
-
+  const rowsPerPage = 10;
+  
   const emptyRows = rowsPerPage - props.rows.length;
   const handleChangePage = (event, newPage) => {
     if (props.handleChangePage) {

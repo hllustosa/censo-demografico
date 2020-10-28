@@ -1,16 +1,17 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import Axios from "axios";
-import { BrowserRouter, Switch, Route, Redirect } from "react-router-dom";
-import { Provider, connect } from "react-redux";
+import { BrowserRouter, Switch, Route} from "react-router-dom";
+import { Provider } from "react-redux";
 import store from "./redux/store";
 import Paths from "./paths.json";
 import Dashboard from "./pages/dashboard";
 import People from "./pages/people";
+import { GET_BASE_URL } from "./data/Utils";
 
 const baseUrl = document.getElementsByTagName("base")[0].getAttribute("href");
 const rootElement = document.getElementById("root");
-Axios.defaults.baseURL = process.env.NODE_ENV !== "production" ? "http://localhost:8080" : Axios.defaults.baseURL;
+Axios.defaults.baseURL = GET_BASE_URL();
 
 function App(props) {
   return (

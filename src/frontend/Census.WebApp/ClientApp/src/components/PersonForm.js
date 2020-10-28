@@ -40,7 +40,7 @@ function PersonForm(props) {
       setMother(response.data);
       setLoading(false);
     })
-  }, []);
+  }, [person]);
 
 
   const handleClose = () => {

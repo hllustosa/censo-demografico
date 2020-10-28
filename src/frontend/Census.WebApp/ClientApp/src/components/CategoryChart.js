@@ -2,7 +2,6 @@ import React from "react";
 import { withStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
-import { shuffle } from "../data/Utils";
 import { Typography } from "@material-ui/core";
 
 const styles = () => ({
@@ -10,8 +9,6 @@ const styles = () => ({
     width: "calc(100% - 20px)",
     height: "35vh",
     padding: "10px",
-    //marginLeft: "10px",
-    //marginRight: "10px",
     outline: "none",
   },
 });

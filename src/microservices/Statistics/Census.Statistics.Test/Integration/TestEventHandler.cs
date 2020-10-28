@@ -1,11 +1,13 @@
 ﻿using Census.People.Infra.Repository;
 using Census.Shared.Bus.Event;
+using Census.Statistics.Application;
 using Census.Statistics.Application.Events;
 using Census.Statistics.Domain.Entities;
 using Census.Statistics.Domain.Interfaces;
 using Census.Statistics.Infra.Connection;
 using Census.Statistics.Infra.Repository;
 using Microsoft.Extensions.Configuration;
+using Moq;
 using System;
 using System.Threading.Tasks;
 using Xunit;
@@ -24,6 +26,8 @@ namespace Census.Statistics.Test.Integration
 
         ITransactionManager TransactionManager { get; set; }
 
+        private readonly Mock<INotificationSender> NotificationSender = new Mock<INotificationSender>();
+
         public TestEventHandler()
         {
             var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
@@ -39,7 +43,7 @@ namespace Census.Statistics.Test.Integration
         {
             //Arrange
             var handler = new PersonCreatedEventHandler(PersonCategoryRepository,
-                PersonPerCityCounterRepository, TransactionManager);
+                PersonPerCityCounterRepository, TransactionManager, NotificationSender.Object);
 
             var @event = new PersonCreatedEvent()
             {

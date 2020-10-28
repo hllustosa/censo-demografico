@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Census.Statistics.Application.Queries;
 using Census.Statistics.Domain.Entities;
+using Census.Statistics.Application;
 
 namespace Census.Statistics.Api.Controllers
 {
@@ -12,7 +13,7 @@ namespace Census.Statistics.Api.Controllers
     public class PerCityCategoryController : Controller
     {
         readonly IMediator Mediator;
-
+        
         public PerCityCategoryController(IMediator mediator)
         {
             Mediator = mediator;

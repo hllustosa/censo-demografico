@@ -18,13 +18,29 @@ body {
 
 .grid-container {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
-  gap: 0px 10px;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr 1fr;
+  gap: 10px 0px;
   grid-template-areas:
-    "main main main right"
-    "main main main right"
-    "main main main right";
+    "main main main"
+    "main main main"
+    "main main main"
+    "right right right";
 }
 .main { grid-area: main; }
 .right { grid-area: right; }
+
+@media screen and (min-width:900px) {
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: 0px 10px;
+      grid-template-areas:
+        "main main main right"
+        "main main main right"
+        "main main main right";
+    }
+    .main { grid-area: main; }
+    .right { grid-area: right; }
+}

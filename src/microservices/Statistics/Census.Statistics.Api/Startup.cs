@@ -2,6 +2,8 @@
 using Census.Shared.Bus;
 using Census.Shared.Bus.Event;
 using Census.Shared.Bus.Interfaces;
+using Census.Statistics.Api.Hubs;
+using Census.Statistics.Application;
 using Census.Statistics.Application.Behaviour;
 using Census.Statistics.Application.Events;
 using Census.Statistics.Domain.Interfaces;
@@ -41,6 +43,19 @@ namespace Census.Statistics.Api
             services.AddTransient<PersonDeletedEventHandler>();
             services.AddTransient<PersonUpdatedEventHandler>();
 
+            services.AddSignalR(o => o.EnableDetailedErrors = true);
+            services.AddScoped<NotificationHub>();
+            services.AddScoped<INotificationSender, NotificationHub>();
+
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(builder =>
+                    builder.SetIsOriginAllowed(_ => true)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials());
+            });
+
             services.AddEventBus(Configuration);
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
@@ -54,13 +69,12 @@ namespace Census.Statistics.Api
             }
             else
             {
-                app.UseHsts();
+                //app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
-            app.UseCors(option => option.AllowAnyOrigin());
+            app.UseCors();
+            app.UseSignalR(builder => { builder.MapHub<NotificationHub>("/hubs/notification"); });
             app.UseMvc();
-            
 
             //Subscribing to events
             eventBus.Subscribe<PersonCreatedEvent, PersonCreatedEventHandler>();

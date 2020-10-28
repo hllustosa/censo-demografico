@@ -16,15 +16,19 @@ namespace Census.Statistics.Application.Events
 
         ITransactionManager TransactionManager { get; set; }
 
+        INotificationSender Sender;
+
         ITransaction Transaction { get; set; }
 
-        public PersonCreatedEventHandler(IPersonCategoryRepository personCategoryRepository, 
-            IPersonPerCityCounterRepository personPerCityCounterRepository, 
-            ITransactionManager transactionManager)
+        public PersonCreatedEventHandler(IPersonCategoryRepository personCategoryRepository,
+            IPersonPerCityCounterRepository personPerCityCounterRepository,
+            ITransactionManager transactionManager,
+            INotificationSender sender)
         {
             PersonCategoryRepository = personCategoryRepository;
             PersonPerCityCounterRepository = personPerCityCounterRepository;
             TransactionManager = transactionManager;
+            Sender = sender;
         }
 
         public async Task Handle(PersonCreatedEvent @event)
@@ -38,6 +42,7 @@ namespace Census.Statistics.Application.Events
                 await HandleCategoryCounters(filter);
                 await HandleCityCounters(person, filter);
                 TransactionManager.CommitTransaction(Transaction);
+                await Sender.NotifyAll();
             }
             catch(Exception e)
             {
