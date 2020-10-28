@@ -25,6 +25,7 @@
     "react-scripts": "^3.0.1",
     "react-svg-tree": "^0.4.1",
     "reactstrap": "^6.3.0",
+    "recharts": "^1.8.5",
     "redux": "^4.0.5",
     "redux-oidc": "^4.0.0-beta1"
   },

@@ -77,7 +77,7 @@ namespace Census.Statistics.Application.Events
 
         private async Task<PersonCategoryCounter> FindGategory(PersonCategoryFilter filter)
         {
-            var categories = await PersonCategoryRepository.GetPersonCategoryCounters(filter);
+            var categories = await PersonCategoryRepository.GetPersonCategoryCounters(Anonimize(filter));
             var personCategory = categories[0];
             return personCategory;
         }

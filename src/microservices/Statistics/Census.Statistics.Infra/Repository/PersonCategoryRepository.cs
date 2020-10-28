@@ -71,7 +71,7 @@ namespace Census.People.Infra.Repository
                     Count = 0,
                     Race = personCategoryFilter.Race,
                     SchoolLevel = personCategoryFilter.SchoolLevel,
-                    Sex = personCategoryFilter.Sex.ToString()
+                    Sex = personCategoryFilter.Sex
                 });
             }
         }

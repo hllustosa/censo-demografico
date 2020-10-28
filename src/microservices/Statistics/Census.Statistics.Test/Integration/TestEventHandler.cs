@@ -81,7 +81,7 @@ namespace Census.Statistics.Test.Integration
             var expectedOld = resultOld[0];
             var expectedNew = resultNew[0];
 
-            expectedOld.Count--;
+            expectedOld.Count = Math.Max(expectedOld.Count - 1, 0);
             expectedNew.Count++;
 
             await handler.Handle(@event);

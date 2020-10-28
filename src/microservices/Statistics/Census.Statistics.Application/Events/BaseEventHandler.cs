@@ -75,5 +75,16 @@ namespace Census.Statistics.Application.Events
                 SchoolLevel = person.Education
             };
         }
+
+        protected static PersonCategoryFilter Anonimize(PersonCategoryFilter filter)
+        {
+            return new PersonCategoryFilter()
+            {
+                Name = string.Empty,
+                Race = filter.Race,
+                SchoolLevel = filter.SchoolLevel,
+                Sex = filter.Sex
+            };
+        }
     }
 }
