@@ -2,6 +2,7 @@ import Axios from "axios";
 import { DoPost, DoPut, DoDelete } from "./Utils";
 
 const PEOPLE_BYNAME_ENDPOINT = "person/api/person?page={0}&name={1}";
+const GET_PERSON = "person/api/person/{0}";
 const SAVE_ENDPOINT = "person/api/person/";
 const UPDATE_ENDPOINT = "person/api/person/{0}";
 const DELETE_ENDPOINT = "person/api/person/{0}";
@@ -10,6 +11,11 @@ export function GetPeople(page, name) {
   const addr = PEOPLE_BYNAME_ENDPOINT.replace("{0}", page)
     .replace("{1}", name ? name : "");
 
+  return Axios.get(addr);
+}
+
+export function GetPerson(id) {
+  const addr = GET_PERSON.replace("{0}", id);
   return Axios.get(addr);
 }
 

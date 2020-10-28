@@ -21,6 +21,7 @@ import DetailsIcon from "../components/DetailsIcon";
 import DeleteIcon from "../components/DeleteIcon";
 import ConfirmationModal from "../components/ConfirmationModal";
 import PersonForm from "../components/PersonForm";
+import Tree from "../components/TreeModal";
 
 const styles = () => ({
   root: {
@@ -46,6 +47,7 @@ function People(props) {
   const [loading, setLoading] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showTree, setShowTree] = useState(false);
 
   const RenderHeader = () => {
     return (
@@ -55,6 +57,7 @@ function People(props) {
           <TableHeaderCell>Sexo</TableHeaderCell>
           <TableHeaderCell>Raça</TableHeaderCell>
           <TableHeaderCell>Escolaridade</TableHeaderCell>
+          <TableHeaderCell></TableHeaderCell>
           <TableHeaderCell></TableHeaderCell>
           <TableHeaderCell></TableHeaderCell>
         </TableRow>
@@ -85,6 +88,14 @@ function People(props) {
         </StyledTableCell>
         <StyledTableCell component="th" scope="row">
           {row.education}
+        </StyledTableCell>
+        <StyledTableCell style={{ width: 30 }}>
+          <DetailsIcon
+            onClick={() => {
+              setSelectedPerson(row);
+              setShowTree(true);
+            }}
+          />
         </StyledTableCell>
         <StyledTableCell style={{ width: 30 }}>
           <DetailsIcon
@@ -151,13 +162,17 @@ function People(props) {
     loadPeople();
   };
 
+  const handleCloseTreeForm = () => {
+    setShowTree(false);
+  };
+
   return (
     <Grid container className={classes.root} direction="column">
       <Backdrop className={classes.backdrop} open={loading}>
         <CircularProgress color="primary" />
       </Backdrop>
       <Grid container direction="row" justify="flex-start">
-        <Title>{"Amigos"}</Title>
+        <Title>{"Pessoas"}</Title>
       </Grid>
       <Grid
         container
@@ -213,6 +228,13 @@ function People(props) {
         <PersonForm
           open={showForm}
           handleClose={handleCloseForm}
+          person={selectedPerson}
+        />
+      )}
+      {showTree && (
+        <Tree
+          open={showTree}
+          handleClose={handleCloseTreeForm}
           person={selectedPerson}
         />
       )}

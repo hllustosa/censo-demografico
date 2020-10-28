@@ -42,7 +42,8 @@ namespace Census.FamilyTree.Application.Events
         private bool HasChangedParents(PersonUpdatedEvent @event)
         {
             return @event.OldPersonData.FatherId != @event.NewPersonData.FatherId
-                || @event.OldPersonData.MotherId != @event.NewPersonData.MotherId;
+                || @event.OldPersonData.MotherId != @event.NewPersonData.MotherId
+                || @event.OldPersonData.Name != @event.NewPersonData.Name;
         }
     }
 }

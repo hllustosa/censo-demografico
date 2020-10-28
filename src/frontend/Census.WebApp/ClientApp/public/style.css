@@ -11,3 +11,7 @@ body {
   background-color: #f5f5f5;
   min-width: 320px;
 }
+
+.vis-network:focus{
+  outline: none;
+}

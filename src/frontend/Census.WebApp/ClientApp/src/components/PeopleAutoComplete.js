@@ -1,5 +1,5 @@
 import React from "react";
-import { GetPeople } from "../data/People";
+import { GetPeople, GetPerson } from "../data/People";
 import TextField from "@material-ui/core/TextField";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import CircularProgress from "@material-ui/core/CircularProgress";
@@ -10,25 +10,23 @@ export default function Asynchronous(props) {
   const [open, setOpen] = React.useState(false);
   const [options, setOptions] = React.useState([]);
   const [value, setValue] = React.useState("");
+  const [defaultValue, setDefaultValue] = React.useState({});
   const [searchValue, setSearchValue] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
-  React.useEffect(
-    () => {
-      setLoading(true);
-      GetPeople(1, searchValue).then((response) => {
-        setOptions(response.data.data);
-        setLoading(false);
-      });
-    },
-    [searchValue]
-  );
+  React.useEffect(() => {
+    setLoading(true);
+    GetPeople(1, searchValue).then((response) => {
+      setOptions(response.data.items);
+      setLoading(false);
+    });
+  }, [searchValue]);
 
   const doneTyping = () => {
     setSearchValue(value);
   };
 
-  const onChange = event => {
+  const onChange = (event) => {
     setValue(event.target.value);
     clearTimeout(typingTimer);
     typingTimer = setTimeout(doneTyping, 900);
@@ -44,22 +42,23 @@ export default function Asynchronous(props) {
       onClose={() => {
         setOpen(false);
       }}
-      getOptionSelected={(option, value) => option.name === value.name}
+      getOptionSelected={(option, value) => option.id === value.id}
       getOptionLabel={(option) => option.name}
       options={options}
       loading={loading}
       defaultValue={props.defaultValue}
       onChange={(event, newValue) => {
-          if(props.handleOnChange){
-            props.handleOnChange(newValue);
-          }
+        if (props.handleOnChange) {
+          props.handleOnChange(newValue);
+        }
       }}
       renderInput={(params) => (
         <TextField
           {...params}
           value={value}
           onChange={onChange}
-          label="Pessoa"
+          label={props.label}
+          size="small"
           variant="outlined"
           fullWidth
           InputProps={{

@@ -52,6 +52,7 @@ namespace Census.People.Api
             app.UseCors(option => {
                 option.AllowAnyOrigin();
                 option.AllowAnyMethod();
+                option.AllowAnyHeader();
             });
             app.UseMvc();
         }
