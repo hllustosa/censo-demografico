@@ -10,6 +10,8 @@ import MenuItem from "@material-ui/core/MenuItem";
 import { withStyles } from "@material-ui/core/styles";
 
 import CategoryChart from "../components/CategoryChart";
+import { GetStats } from "../data/PeopleStats";
+
 
 const styles = (theme) => ({
   root: {
@@ -29,6 +31,7 @@ const styles = (theme) => ({
 
 function Dashboard(props) {
   const [personFilter, setPersonFilter] = useState({});
+  const [personData, setPersonData] = useState({});
 
   const onChange = (field) => {
     return (e) => {
@@ -37,6 +40,12 @@ function Dashboard(props) {
       setPersonFilter(newPersonFilter);
     };
   };
+
+  React.useEffect(() => {
+    GetStats(personFilter).then(response => {
+      setPersonData(response.data);
+    })
+  }, [personFilter])
 
   const { classes } = props;
   return (

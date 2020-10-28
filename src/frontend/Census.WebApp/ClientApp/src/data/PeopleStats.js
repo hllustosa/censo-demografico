@@ -5,11 +5,11 @@ const PEOPLE_STATS_PERCITY_ENDPOINT = "/stats/api/percitycategory/cities/{0}/cou
 const PEOPLE_NAMECOUNTER_PERCITY_ENDPOINT = "/stats/api/percitycategory/counters/{0}";
 const CITIES_ENDPOINT = "/stats/api/percitycategory/cities";
 
-export function GetStats(name, sex, education, race) {
-  const addr = PEOPLE_STATS_ENDPOINT.replace("{0}", name)
-    .replace("{0}", sex)
-    .replace("{2}", education)
-    .replace("{3}", race);
+export function GetStats(filter) {
+  const addr = PEOPLE_STATS_ENDPOINT.replace("{0}", filter.name ? filter.name : "")
+    .replace("{1}", filter.sex ? filter.sex : "")
+    .replace("{2}", filter.education ? filter.education : "")
+    .replace("{3}", filter.race ? filter.race : "");
 
   return Axios.get(addr);
 }
