@@ -26,6 +26,10 @@ namespace Census.People.Application.Validation
             RuleFor(x => x.Address.Burrow).MaximumLength(100).NotNull();
             RuleFor(x => x.Address.City).MaximumLength(100).NotNull();
             RuleFor(x => x.Address.State).MaximumLength(2).NotNull();
+
+            //Can't be your own father or mother
+            RuleFor(x => x.FatherId).Must((x, fatherId) => fatherId != x.Id);
+            RuleFor(x => x.FatherId).Must((x, motherId) => motherId != x.Id);
         }
     }
 }
