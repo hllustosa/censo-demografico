@@ -18,17 +18,18 @@ spec:
         ports:
         - containerPort: 8080
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: front
-  labels:
-    app:  census-front
-spec:
-  ports:
-  - port: 80
-    targetPort: 8080
-  selector:
-    app: census-front
-  type: LoadBalancer
+#---
+
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: front
+#  labels:
+#    app:  census-front
+#spec:
+#  ports:
+#  - port: 80
+#    targetPort: 8080
+#  selector:
+#    app: census-front
+#  type: LoadBalancer
