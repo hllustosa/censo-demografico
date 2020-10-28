@@ -22,5 +22,5 @@ export function UpdatePerson(person) {
 }
 
 export function DeletePerson(person) {
-  return DoDelete(DELETE_ENDPOINT.replace("{0}", person.id), person);
+  return DoDelete(DELETE_ENDPOINT.replace("{0}", person.id));
 }

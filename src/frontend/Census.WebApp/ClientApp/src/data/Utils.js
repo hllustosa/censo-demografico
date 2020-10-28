@@ -28,6 +28,6 @@ export function DoPut(addr, obj) {
   return Axios.put(addr, obj);
 }
 
-export function DoDelete(addr, obj) {
+export function DoDelete(addr) {
   return Axios.delete(addr);
 }

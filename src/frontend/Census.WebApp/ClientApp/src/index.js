@@ -10,7 +10,7 @@ import People from "./pages/people";
 
 const baseUrl = document.getElementsByTagName("base")[0].getAttribute("href");
 const rootElement = document.getElementById("root");
-Axios.defaults.baseURL = "http://localhost:8080";
+Axios.defaults.baseURL = process.env.NODE_ENV !== "production" ? "http://localhost:8080" : Axios.defaults.baseURL;
 
 function App(props) {
   return (

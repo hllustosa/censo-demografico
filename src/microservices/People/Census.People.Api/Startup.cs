@@ -49,7 +49,10 @@ namespace Census.People.Api
             }
 
             app.UseHttpsRedirection();
-            app.UseCors(option => option.AllowAnyOrigin());
+            app.UseCors(option => {
+                option.AllowAnyOrigin();
+                option.AllowAnyMethod();
+            });
             app.UseMvc();
         }
     }
