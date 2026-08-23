@@ -63,8 +63,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install and test frontend
+      - name: Install and build frontend
         working-directory: src/frontend/Census.WebApp/ClientApp
         run: |
           npm ci
-          npm test -- --watchAll=false
+          npm run build

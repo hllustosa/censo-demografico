@@ -1,4 +1,4 @@
-﻿using Census.People.Infra.Repository;
+﻿using Census.Statistics.Infra.Service;
 using Census.Shared.Bus.Event;
 using Census.Statistics.Application;
 using Census.Statistics.Application.Events;
