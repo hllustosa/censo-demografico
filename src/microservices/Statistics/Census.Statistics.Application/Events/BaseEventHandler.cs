@@ -1,7 +1,7 @@
-﻿using Census.Shared.Bus.Event;
-using Census.Statistics.Domain.Entities;
 using System;
 using System.Collections.Generic;
+using Census.Shared.Bus.Event;
+using Census.Statistics.Domain.Entities;
 
 namespace Census.Statistics.Application.Events
 {

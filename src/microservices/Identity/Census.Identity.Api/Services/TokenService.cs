@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Census.Identity.Infra.Entities;
@@ -6,7 +7,6 @@ using Census.Shared.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using System.IdentityModel.Tokens.Jwt;
 
 namespace Census.Identity.Api.Services;
 

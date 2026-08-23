@@ -1,4 +1,4 @@
-﻿using Census.People.Application.Queries;
+using Census.People.Application.Queries;
 using FluentValidation;
 
 namespace Census.People.Application.Validation

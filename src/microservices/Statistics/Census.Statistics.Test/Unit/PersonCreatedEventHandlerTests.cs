@@ -1,8 +1,8 @@
+using Census.Shared.Bus.Event;
 using Census.Statistics.Application;
 using Census.Statistics.Application.Events;
 using Census.Statistics.Domain.Entities;
 using Census.Statistics.Domain.Interfaces;
-using Census.Shared.Bus.Event;
 using Moq;
 using Xunit;
 

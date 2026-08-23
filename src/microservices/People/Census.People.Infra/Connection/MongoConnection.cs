@@ -1,4 +1,4 @@
-﻿using Census.People.Domain.Entities;
+using Census.People.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 

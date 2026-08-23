@@ -1,4 +1,4 @@
-﻿using Census.Shared.Auth;
+using Census.Shared.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 

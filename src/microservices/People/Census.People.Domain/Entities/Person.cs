@@ -1,5 +1,5 @@
-﻿using Census.People.Domain.Values;
 using System;
+using Census.People.Domain.Values;
 
 namespace Census.People.Domain.Entities
 {

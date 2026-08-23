@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
-using Neo4jClient;
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Neo4jClient;
 
 namespace Census.FamilyTree.Infra.Connection
 {

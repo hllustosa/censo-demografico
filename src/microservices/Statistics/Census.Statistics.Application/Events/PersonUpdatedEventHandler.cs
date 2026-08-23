@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Census.Shared.Bus.Event;
 using Census.Shared.Bus.Interfaces;
@@ -41,10 +41,10 @@ namespace Census.Statistics.Application.Events
                     oldFilter, newFilter);
                 TransactionManager.CommitTransaction(Transaction);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 TransactionManager.RollBackTransaction(Transaction);
-                throw e;
+                throw;
             }
         }
 
@@ -60,10 +60,10 @@ namespace Census.Statistics.Application.Events
             await PersonCategoryRepository.Save(Transaction, newPersonCategory);
         }
 
-        private async Task HandleCityCounters(string oldCity, string newCity, 
+        private async Task HandleCityCounters(string oldCity, string newCity,
             PersonCategoryFilter oldFilter, PersonCategoryFilter newFilter)
         {
-            if(oldCity != newCity)
+            if (oldCity != newCity)
             {
                 var oldPersonPerCityCategory = await PersonPerCityCounterRepository.GetByCity(oldCity);
                 DecrementPerCityCounters(oldFilter, oldPersonPerCityCategory);

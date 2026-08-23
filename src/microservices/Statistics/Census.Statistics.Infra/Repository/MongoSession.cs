@@ -1,10 +1,10 @@
-﻿using Census.Statistics.Domain.Interfaces;
+using Census.Statistics.Domain.Interfaces;
 using MongoDB.Driver;
 
 namespace Census.Statistics.Infra.Repository
 {
     public class MongoSession : ITransaction
     {
-        public IClientSessionHandle Session { get; set; } 
+        public IClientSessionHandle Session { get; set; }
     }
 }

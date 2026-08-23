@@ -1,12 +1,12 @@
-﻿using Census.People.Domain.Entities;
-using Census.People.Domain.Interfaces;
-using Census.People.Infra.Connection;
-using MongoDB.Bson;
-using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Census.People.Domain.Entities;
+using Census.People.Domain.Interfaces;
+using Census.People.Infra.Connection;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Census.People.Infra.Repository
 {
@@ -158,7 +158,7 @@ namespace Census.People.Infra.Repository
             return result.ToEnumerable();
         }
 
-        private static async Task<IEnumerable<Person>> GetPeopleFilteredByName(string nameFilter, 
+        private static async Task<IEnumerable<Person>> GetPeopleFilteredByName(string nameFilter,
             IMongoCollection<Person> collection)
         {
             var filter = BuildFilter(nameFilter);

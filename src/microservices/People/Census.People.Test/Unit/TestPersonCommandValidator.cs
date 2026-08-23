@@ -1,8 +1,8 @@
-﻿using Census.People.Application.Commands;
+using System.Threading.Tasks;
+using Census.People.Application.Commands;
 using Census.People.Application.Validation;
 using Census.People.Domain.Entities;
 using Census.People.Domain.Values;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Census.People.Test.Unit

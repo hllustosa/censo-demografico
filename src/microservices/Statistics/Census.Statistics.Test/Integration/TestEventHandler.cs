@@ -1,16 +1,16 @@
-﻿using Census.Statistics.Application;
-using Census.Statistics.Infra.Service;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Census.Shared.Bus.Event;
+using Census.Statistics.Application;
 using Census.Statistics.Application.Events;
 using Census.Statistics.Domain.Entities;
 using Census.Statistics.Domain.Interfaces;
 using Census.Statistics.Infra.Connection;
 using Census.Statistics.Infra.Repository;
+using Census.Statistics.Infra.Service;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Census.Statistics.Test.Integration

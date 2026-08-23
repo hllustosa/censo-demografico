@@ -1,13 +1,13 @@
-﻿using Census.Shared.Bus.Interfaces;
+using System;
+using System.IO;
+using System.Net.Sockets;
+using Census.Shared.Bus.Interfaces;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using System;
-using System.IO;
-using System.Net.Sockets;
 
 namespace Census.Shared.Bus.Implementation
 {
@@ -22,9 +22,9 @@ namespace Census.Shared.Bus.Implementation
 
         IConnection Connection;
         bool Disposed;
-        
-        public PersistentConnection(IConnectionFactory connectionFactory, 
-            ILogger<PersistentConnection> logger, 
+
+        public PersistentConnection(IConnectionFactory connectionFactory,
+            ILogger<PersistentConnection> logger,
             int retryCount = 5)
         {
             ConnectionFactory = connectionFactory;

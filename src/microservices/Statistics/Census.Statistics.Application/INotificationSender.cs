@@ -1,8 +1,8 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace Census.Statistics.Application
 {
-    public interface INotificationSender 
+    public interface INotificationSender
     {
         Task NotifyAll();
     }

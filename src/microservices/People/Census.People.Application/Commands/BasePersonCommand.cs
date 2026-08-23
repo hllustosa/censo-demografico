@@ -1,4 +1,4 @@
-﻿using Census.People.Domain.Values;
+using Census.People.Domain.Values;
 
 namespace Census.People.Application.Commands
 {

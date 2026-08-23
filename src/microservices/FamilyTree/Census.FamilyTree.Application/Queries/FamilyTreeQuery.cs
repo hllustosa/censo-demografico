@@ -1,4 +1,4 @@
-﻿using Census.FamilyTree.Domain.Entities;
+using Census.FamilyTree.Domain.Entities;
 using MediatR;
 
 namespace Census.FamilyTree.Application.Queries

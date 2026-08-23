@@ -1,4 +1,4 @@
-﻿using Census.People.Application.Behaviour;
+using Census.People.Application.Behaviour;
 using Census.People.Application.Services;
 using Census.People.Domain.Interfaces;
 using Census.People.Infra.Connection;

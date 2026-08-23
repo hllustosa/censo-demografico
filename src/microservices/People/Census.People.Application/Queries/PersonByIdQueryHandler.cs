@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using System.Threading.Tasks;
 using Census.People.Domain.Entities;
 using Census.People.Domain.Interfaces;

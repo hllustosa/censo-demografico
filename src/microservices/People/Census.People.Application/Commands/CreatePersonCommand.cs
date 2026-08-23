@@ -1,6 +1,6 @@
-﻿using Census.People.Domain.Values;
-using MediatR;
 using System;
+using Census.People.Domain.Values;
+using MediatR;
 
 namespace Census.People.Application.Commands
 {

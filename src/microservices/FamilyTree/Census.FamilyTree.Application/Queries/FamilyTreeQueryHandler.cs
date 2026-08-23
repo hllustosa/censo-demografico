@@ -1,8 +1,8 @@
-﻿using Census.FamilyTree.Domain.Entities;
-using Census.FamilyTree.Domain.Repository;
-using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
+using Census.FamilyTree.Domain.Entities;
+using Census.FamilyTree.Domain.Repository;
+using MediatR;
 
 namespace Census.FamilyTree.Application.Queries
 {

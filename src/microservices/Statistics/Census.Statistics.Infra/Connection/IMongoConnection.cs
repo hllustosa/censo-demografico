@@ -1,4 +1,4 @@
-﻿using Census.Statistics.Domain.Entities;
+using Census.Statistics.Domain.Entities;
 using MongoDB.Driver;
 
 namespace Census.Statistics.Infra.Connection

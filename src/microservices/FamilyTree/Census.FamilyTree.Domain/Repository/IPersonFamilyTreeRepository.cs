@@ -1,5 +1,5 @@
-﻿using Census.FamilyTree.Domain.Entities;
 using System.Threading.Tasks;
+using Census.FamilyTree.Domain.Entities;
 
 namespace Census.FamilyTree.Domain.Repository
 {

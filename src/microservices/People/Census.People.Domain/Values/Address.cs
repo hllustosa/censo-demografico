@@ -1,4 +1,4 @@
-﻿namespace Census.People.Domain.Values
+namespace Census.People.Domain.Values
 {
     public class Address
     {

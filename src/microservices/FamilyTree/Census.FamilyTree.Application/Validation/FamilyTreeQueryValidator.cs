@@ -1,5 +1,5 @@
-using FluentValidation;
 using Census.FamilyTree.Application.Queries;
+using FluentValidation;
 
 namespace Census.FamilyTree.Application.Validation
 {

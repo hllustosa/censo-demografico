@@ -1,4 +1,4 @@
-﻿using Census.People.Application.Commands;
+using Census.People.Application.Commands;
 using Census.People.Application.Services;
 using Census.People.Domain.Entities;
 using Census.People.Domain.Interfaces;

@@ -1,5 +1,5 @@
-﻿using MediatR;
 using System.Collections.Generic;
+using MediatR;
 
 namespace Census.Statistics.Application.Queries
 {

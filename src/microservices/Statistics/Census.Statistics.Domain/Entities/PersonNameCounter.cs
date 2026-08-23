@@ -1,4 +1,4 @@
-﻿namespace Census.Statistics.Domain.Entities
+namespace Census.Statistics.Domain.Entities
 {
     public class PersonNameCounter
     {

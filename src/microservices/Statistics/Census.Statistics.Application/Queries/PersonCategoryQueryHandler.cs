@@ -1,10 +1,10 @@
-﻿using Census.Statistics.Domain.Entities;
-using Census.Statistics.Domain.Interfaces;
-using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Census.Statistics.Domain.Entities;
+using Census.Statistics.Domain.Interfaces;
+using MediatR;
 
 namespace Census.Statistics.Application.Queries
 {

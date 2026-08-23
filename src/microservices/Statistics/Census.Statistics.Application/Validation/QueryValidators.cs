@@ -1,5 +1,5 @@
-using FluentValidation;
 using Census.Statistics.Application.Queries;
+using FluentValidation;
 
 namespace Census.Statistics.Application.Validation
 {

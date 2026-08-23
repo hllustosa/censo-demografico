@@ -1,4 +1,4 @@
-﻿using Census.Statistics.Domain.Entities;
+using Census.Statistics.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;

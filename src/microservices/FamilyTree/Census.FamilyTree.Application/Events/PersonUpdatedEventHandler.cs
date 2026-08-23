@@ -1,8 +1,8 @@
-﻿using Census.FamilyTree.Domain.Entities;
+using System.Threading.Tasks;
+using Census.FamilyTree.Domain.Entities;
 using Census.FamilyTree.Domain.Repository;
 using Census.Shared.Bus.Event;
 using Census.Shared.Bus.Interfaces;
-using System.Threading.Tasks;
 
 namespace Census.FamilyTree.Application.Events
 {

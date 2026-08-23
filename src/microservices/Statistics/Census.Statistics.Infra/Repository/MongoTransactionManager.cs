@@ -1,7 +1,7 @@
-﻿using Census.Statistics.Domain.Interfaces;
+using System;
+using Census.Statistics.Domain.Interfaces;
 using Census.Statistics.Infra.Connection;
 using MongoDB.Driver;
-using System;
 
 namespace Census.Statistics.Infra.Repository
 {
@@ -23,7 +23,7 @@ namespace Census.Statistics.Infra.Repository
                 session.StartTransaction();
                 return new MongoSession() { Session = session };
             }
-            catch(NotSupportedException)
+            catch (NotSupportedException)
             {
                 return new MongoSession() { Session = session };
             }
@@ -32,7 +32,7 @@ namespace Census.Statistics.Infra.Repository
         public void CommitTransaction(ITransaction transaction)
         {
             var session = ((MongoSession)transaction).Session;
-            if(session.IsInTransaction)
+            if (session.IsInTransaction)
             {
                 session.CommitTransaction();
             }

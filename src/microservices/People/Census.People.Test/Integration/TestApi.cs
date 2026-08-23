@@ -119,7 +119,7 @@ public class TestApi
                 ZipCode = "25000-000",
                 City = "City",
                 Burrow = "Burrow",
-                State = "ST" 
+                State = "ST"
             }
         };
     }

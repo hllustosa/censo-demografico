@@ -1,5 +1,5 @@
-﻿using Census.People.Domain.Entities;
 using System.Threading.Tasks;
+using Census.People.Domain.Entities;
 
 namespace Census.People.Domain.Interfaces
 {

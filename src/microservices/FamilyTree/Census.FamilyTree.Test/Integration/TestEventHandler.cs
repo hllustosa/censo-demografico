@@ -1,4 +1,7 @@
-﻿using Census.FamilyTree.Application.Events;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Census.FamilyTree.Application.Events;
 using Census.FamilyTree.Domain.Entities;
 using Census.FamilyTree.Domain.Repository;
 using Census.FamilyTree.Infra.Connection;
@@ -6,9 +9,6 @@ using Census.FamilyTree.Infra.Repository;
 using Census.Shared.Bus.Event;
 using Microsoft.Extensions.Configuration;
 using Neo4jClient.Transactions;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Census.FamilyTree.Test.Integration
@@ -62,8 +62,8 @@ namespace Census.FamilyTree.Test.Integration
 
             var result = await _personFamilyTreeRepository.GetFamilyTree("3", 2);
             Assert.NotEmpty(result.Nodes.Where(item => item.Id == "5"));
-            Assert.Empty(result.Nodes.Where(item => item.Id == "1"));
-            Assert.Empty(result.Nodes.Where(item => item.Id == "2"));
+            Assert.DoesNotContain(result.Nodes, item => item.Id == "1");
+            Assert.DoesNotContain(result.Nodes, item => item.Id == "2");
         }
 
         [Fact]
@@ -79,13 +79,13 @@ namespace Census.FamilyTree.Test.Integration
             await handler.Handle(@event);
 
             var result = await _personFamilyTreeRepository.GetFamilyTree("5", 2);
-            Assert.Empty(result.Nodes.Where(item => item.Id == "3"));
+            Assert.DoesNotContain(result.Nodes, item => item.Id == "3");
 
             result = await _personFamilyTreeRepository.GetFamilyTree("1", 2);
-            Assert.Empty(result.Nodes.Where(item => item.Id == "3"));
+            Assert.DoesNotContain(result.Nodes, item => item.Id == "3");
 
             result = await _personFamilyTreeRepository.GetFamilyTree("2", 2);
-            Assert.Empty(result.Nodes.Where(item => item.Id == "3"));
+            Assert.DoesNotContain(result.Nodes, item => item.Id == "3");
         }
 
         private async Task SetupData()

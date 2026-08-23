@@ -1,10 +1,10 @@
-﻿using Census.People.Application.Queries;
+using System.Threading;
+using System.Threading.Tasks;
+using Census.People.Application.Queries;
 using Census.People.Domain.Entities;
 using Census.People.Domain.Interfaces;
 using Census.People.Domain.Values;
 using Moq;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Census.People.Test.Unit
@@ -24,7 +24,7 @@ namespace Census.People.Test.Unit
         public async Task TestQueryExistingPerson()
         {
             SetupGetPersonById("1", GetPerson());
-            var returnedPerson = await PersonByIdQueryHandler.Handle(new PersonByIdQuery() { Id = "1"}, CancellationToken.None);
+            var returnedPerson = await PersonByIdQueryHandler.Handle(new PersonByIdQuery() { Id = "1" }, CancellationToken.None);
             Assert.Equal(GetPerson(), returnedPerson);
         }
 

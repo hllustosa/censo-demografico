@@ -1,13 +1,13 @@
-﻿using Census.Statistics.Application.Behaviour;
 using Census.Shared.Bus;
 using Census.Shared.Bus.Event;
 using Census.Shared.Bus.Interfaces;
 using Census.Shared.Observability;
 using Census.Shared.Web;
-using Census.Statistics.Application;
-using Census.Statistics.Application.Events;
 using Census.Statistics.Api.Hubs;
 using Census.Statistics.Api.Services;
+using Census.Statistics.Application;
+using Census.Statistics.Application.Behaviour;
+using Census.Statistics.Application.Events;
 using Census.Statistics.Domain.Interfaces;
 using Census.Statistics.Infra.Connection;
 using Census.Statistics.Infra.ProcessedEvents;

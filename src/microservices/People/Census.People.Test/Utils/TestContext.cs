@@ -1,9 +1,9 @@
+using System.Net.Http.Headers;
+using System.Text;
 using Census.People.Test.Utils;
 using Census.Shared.Auth;
 using Census.Testing;
 using Newtonsoft.Json;
-using System.Net.Http.Headers;
-using System.Text;
 
 namespace Census.People.Test.Utils;
 

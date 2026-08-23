@@ -1,8 +1,8 @@
-﻿using Census.People.Domain.Entities;
-using Census.People.Domain.Interfaces;
-using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
+using Census.People.Domain.Entities;
+using Census.People.Domain.Interfaces;
+using MediatR;
 
 namespace Census.People.Application.Queries
 {

@@ -1,6 +1,6 @@
-﻿using Census.Statistics.Domain.Entities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Census.Statistics.Domain.Entities;
 
 namespace Census.Statistics.Domain.Interfaces
 {

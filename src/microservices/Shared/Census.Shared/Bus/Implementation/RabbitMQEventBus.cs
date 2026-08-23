@@ -1,4 +1,6 @@
-﻿using Census.Shared.Bus.Interfaces;
+using System.Net.Sockets;
+using System.Text;
+using Census.Shared.Bus.Interfaces;
 using Census.Shared.Observability;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,8 +11,6 @@ using Polly.Retry;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using System.Net.Sockets;
-using System.Text;
 
 namespace Census.Shared.Bus.Implementation
 {

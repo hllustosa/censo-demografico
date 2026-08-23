@@ -1,4 +1,4 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Census.Shared.Auth;
 using Census.Shared.Web;
 using Census.Statistics.Application.Queries;

@@ -141,6 +141,7 @@ More: [docs/security.md](docs/security.md)
 
 | Doc | Content |
 |-----|---------|
+| [docs/faq.md](docs/faq.md) | FAQ — auth, outbox, RabbitMQ, Neo4j, nginx, retries, and more |
 | [docs/architecture.md](docs/architecture.md) | System design |
 | [docs/events.md](docs/events.md) | Integration event catalog |
 | [docs/local-development.md](docs/local-development.md) | DX / Make targets |

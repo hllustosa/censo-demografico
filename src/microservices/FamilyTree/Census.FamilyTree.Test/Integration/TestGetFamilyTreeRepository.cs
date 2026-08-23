@@ -1,11 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Census.FamilyTree.Domain.Entities;
 using Census.FamilyTree.Domain.Repository;
 using Census.FamilyTree.Infra.Connection;
 using Census.FamilyTree.Infra.Repository;
 using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Census.FamilyTree.Test.Integration

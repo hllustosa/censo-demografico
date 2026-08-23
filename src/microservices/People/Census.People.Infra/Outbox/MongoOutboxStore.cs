@@ -1,7 +1,7 @@
-using Census.Shared.Bus.Interfaces;
 using Census.People.Domain.Interfaces;
 using Census.People.Infra.Connection;
 using Census.People.Infra.Repository;
+using Census.Shared.Bus.Interfaces;
 using MongoDB.Driver;
 
 namespace Census.People.Infra.Outbox

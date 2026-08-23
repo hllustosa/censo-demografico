@@ -1,6 +1,6 @@
-﻿using Census.Shared.Bus.Domain;
 using System;
 using System.Collections.Generic;
+using Census.Shared.Bus.Domain;
 
 namespace Census.Shared.Bus.Interfaces
 {

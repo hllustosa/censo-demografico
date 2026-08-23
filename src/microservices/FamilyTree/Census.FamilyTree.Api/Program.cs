@@ -1,7 +1,7 @@
-﻿using Census.FamilyTree.Application.Queries;
-using Census.FamilyTree.Application.Validation;
 using Census.FamilyTree.Application.Behaviour;
 using Census.FamilyTree.Application.Events;
+using Census.FamilyTree.Application.Queries;
+using Census.FamilyTree.Application.Validation;
 using Census.FamilyTree.Domain.Repository;
 using Census.FamilyTree.Infra.Connection;
 using Census.FamilyTree.Infra.ProcessedEvents;

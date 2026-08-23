@@ -1,12 +1,12 @@
-﻿using Census.People.Domain.Entities;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Census.People.Domain.Entities;
 using Census.People.Domain.Interfaces;
 using Census.Shared.Bus.Event;
 using Census.Shared.Web.Exceptions;
 using FluentValidation;
 using FluentValidation.Results;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Census.People.Application.Commands
 {

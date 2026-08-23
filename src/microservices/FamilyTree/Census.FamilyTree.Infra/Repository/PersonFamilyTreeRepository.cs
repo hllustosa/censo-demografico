@@ -1,12 +1,12 @@
-﻿using Census.FamilyTree.Domain.Entities;
-using Census.FamilyTree.Domain.Repository;
-using Census.FamilyTree.Infra.Connection;
-using Neo4jClient;
-using Neo4jClient.Transactions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Census.FamilyTree.Domain.Entities;
+using Census.FamilyTree.Domain.Repository;
+using Census.FamilyTree.Infra.Connection;
+using Neo4jClient;
+using Neo4jClient.Transactions;
 
 namespace Census.FamilyTree.Infra.Repository
 {

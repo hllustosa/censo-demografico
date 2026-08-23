@@ -1,13 +1,13 @@
-﻿using Census.Statistics.Domain.Entities;
-using Census.Statistics.Domain.Interfaces;
-using Census.Statistics.Infra.Connection;
-using Census.Statistics.Infra.Repository;
-using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Census.Statistics.Domain.Entities;
+using Census.Statistics.Domain.Interfaces;
+using Census.Statistics.Infra.Connection;
+using Census.Statistics.Infra.Repository;
+using MongoDB.Driver;
 
 namespace Census.Statistics.Infra.Repository
 {
@@ -33,12 +33,12 @@ namespace Census.Statistics.Infra.Repository
 
             CreateDefaultResult(list, personCategoryFilter);
             return list;
-            
+
         }
 
         public async Task Save(ITransaction transaction, PersonCategoryCounter personCategoryCounter)
         {
-            var session = ((MongoSession) transaction).Session;
+            var session = ((MongoSession)transaction).Session;
             var collection = MongoConnection.GetPersonCategoriesCollection();
             var filter = Builders<PersonCategoryCounter>.Filter.Empty;
 
@@ -96,8 +96,8 @@ namespace Census.Statistics.Infra.Repository
         }
 
         private static FilterDefinition<PersonCategoryCounter> AddEqFilter(
-            Expression<Func<PersonCategoryCounter, string>> field, 
-            string value, 
+            Expression<Func<PersonCategoryCounter, string>> field,
+            string value,
             FilterDefinition<PersonCategoryCounter> filter)
         {
             if (!String.IsNullOrEmpty(value))
@@ -110,7 +110,7 @@ namespace Census.Statistics.Infra.Repository
             return filter;
         }
 
-        private static FilterDefinition<PersonCategoryCounter> AddNameFilter(PersonCategoryFilter personCategoryFilter, 
+        private static FilterDefinition<PersonCategoryCounter> AddNameFilter(PersonCategoryFilter personCategoryFilter,
             FilterDefinition<PersonCategoryCounter> filter)
         {
             if (!String.IsNullOrEmpty(personCategoryFilter.Name))

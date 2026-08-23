@@ -1,4 +1,4 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Census.FamilyTree.Application.Queries;
 using Census.FamilyTree.Domain.Entities;
 using Census.Shared.Auth;

@@ -1,10 +1,10 @@
-﻿using Census.Statistics.Domain.Entities;
-using Census.Statistics.Domain.Interfaces;
-using Census.Statistics.Infra.Connection;
-using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Census.Statistics.Domain.Entities;
+using Census.Statistics.Domain.Interfaces;
+using Census.Statistics.Infra.Connection;
+using MongoDB.Driver;
 
 namespace Census.Statistics.Infra.Repository
 {
@@ -41,7 +41,7 @@ namespace Census.Statistics.Infra.Repository
             var collection = MongoConnection.GetPersonPerCityCounterCollection();
             var filter = Builders<PersonPerCityCounter>.Filter.Empty;
             var result = await collection.FindAsync(filter);
-            var cities = result.ToEnumerable().Select( x => x.City ).ToList();
+            var cities = result.ToEnumerable().Select(x => x.City).ToList();
             return cities;
         }
 
@@ -64,7 +64,7 @@ namespace Census.Statistics.Infra.Repository
         private PersonPerCityCounter CreateDefaultForCity(string city)
         {
             return new PersonPerCityCounter()
-            { 
+            {
                 City = city,
                 Count = 0,
             };

@@ -1,4 +1,4 @@
-﻿namespace Census.FamilyTree.Domain.Entities
+namespace Census.FamilyTree.Domain.Entities
 {
     public class PersonFamilyTreeNode
     {

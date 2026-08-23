@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Census.Statistics.Domain.Interfaces
 {
-    public interface ITransaction {}
+    public interface ITransaction { }
 
     public interface ITransactionManager
     {

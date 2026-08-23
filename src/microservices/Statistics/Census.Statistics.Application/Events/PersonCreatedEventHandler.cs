@@ -1,10 +1,10 @@
-﻿using Census.Shared.Bus.Event;
-using Census.Shared.Bus.Interfaces;
-using Census.Statistics.Domain.Entities;
-using Census.Statistics.Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Census.Shared.Bus.Event;
+using Census.Shared.Bus.Interfaces;
+using Census.Statistics.Domain.Entities;
+using Census.Statistics.Domain.Interfaces;
 
 namespace Census.Statistics.Application.Events
 {
@@ -32,7 +32,7 @@ namespace Census.Statistics.Application.Events
         }
 
         public async Task Handle(PersonCreatedEvent @event)
-        { 
+        {
             var person = @event.Person;
             var filter = CreateFilter(person);
             Transaction = TransactionManager.BeginTransaction();
@@ -44,10 +44,10 @@ namespace Census.Statistics.Application.Events
                 TransactionManager.CommitTransaction(Transaction);
                 await Sender.NotifyAll();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 TransactionManager.RollBackTransaction(Transaction);
-                throw e;
+                throw;
             }
         }
 

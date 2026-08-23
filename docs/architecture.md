@@ -52,4 +52,6 @@ People is the source of truth. Statistics and FamilyTree are **eventually consis
 - `Census.Shared` — technical cross-cutting concerns (messaging, auth middleware, observability, web defaults).
 - `Census.Testing` — test helpers only (not shipped in production images).
 
+Common questions (auth, outbox, RabbitMQ, Neo4j, nginx, rate limits, idempotency): see [faq.md](faq.md).
+
 See [ADRs](adr/) for decision records and [events.md](events.md) for the event catalog.

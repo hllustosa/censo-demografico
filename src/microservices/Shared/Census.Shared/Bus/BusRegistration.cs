@@ -1,5 +1,5 @@
-﻿using Census.Shared.Bus.Interfaces;
 using Census.Shared.Bus.Implementation;
+using Census.Shared.Bus.Interfaces;
 using Census.Shared.Observability;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,7 +1,7 @@
-﻿using Census.People.Application.Commands;
+using System.Linq;
+using Census.People.Application.Commands;
 using Census.People.Domain.Values;
 using FluentValidation;
-using System.Linq;
 
 namespace Census.People.Application.Validation
 {

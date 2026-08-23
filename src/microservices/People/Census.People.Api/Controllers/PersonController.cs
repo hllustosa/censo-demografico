@@ -1,14 +1,14 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using Census.People.Application.Commands;
 using Census.People.Application.Queries;
 using Census.People.Domain.Entities;
 using Census.Shared.Auth;
+using Census.Shared.Web;
 using Census.Shared.Web.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Census.Shared.Web;
 
 namespace Census.People.Api.Controllers;
 

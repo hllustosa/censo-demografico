@@ -1,7 +1,7 @@
+using Census.People.Domain.Interfaces;
 using Census.Shared.Bus;
 using Census.Shared.Bus.Interfaces;
 using Census.Shared.Observability;
-using Census.People.Domain.Interfaces;
 using Newtonsoft.Json;
 
 namespace Census.People.Application.Services

@@ -1,6 +1,6 @@
-﻿using Census.Statistics.Domain.Entities;
-using MediatR;
 using System.Collections.Generic;
+using Census.Statistics.Domain.Entities;
+using MediatR;
 
 namespace Census.Statistics.Application.Queries
 {

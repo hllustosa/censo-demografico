@@ -1,10 +1,10 @@
+using System.Diagnostics.Metrics;
 using Census.Shared.Bus.Interfaces;
 using Census.Shared.Observability;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Diagnostics.Metrics;
 
 namespace Census.Shared.Bus.Implementation
 {

@@ -1,9 +1,9 @@
-﻿using Census.Shared.Bus.Event;
+using System;
+using System.Threading.Tasks;
+using Census.Shared.Bus.Event;
 using Census.Shared.Bus.Interfaces;
 using Census.Statistics.Domain.Entities;
 using Census.Statistics.Domain.Interfaces;
-using System;
-using System.Threading.Tasks;
 
 namespace Census.Statistics.Application.Events
 {
@@ -41,7 +41,7 @@ namespace Census.Statistics.Application.Events
             catch (Exception e)
             {
                 TransactionManager.RollBackTransaction(Transaction);
-                throw e;
+                throw;
             }
         }
 
