@@ -1,64 +1,90 @@
-﻿using Census.People.Application.Commands;
+﻿using Asp.Versioning;
+using Census.People.Application.Commands;
 using Census.People.Application.Queries;
 using Census.People.Domain.Entities;
-using Census.Shared.Bus.Event;
-using Census.Shared.Bus.Interfaces;
+using Census.Shared.Auth;
+using Census.Shared.Web.Exceptions;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.RateLimiting;
+using Census.Shared.Web;
 
-namespace Census.People.Api.Controllers
+namespace Census.People.Api.Controllers;
+
+[ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[Produces("application/json")]
+public class PersonController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class PersonController : ControllerBase
+    private readonly IMediator _mediator;
+
+    public PersonController(IMediator mediator)
     {
-        readonly IMediator Mediator;
+        _mediator = mediator;
+    }
 
-        public PersonController(IMediator mediator)
+    [HttpGet]
+    [Authorize(Policy = CensusPolicies.CanReadPeople)]
+    [EnableRateLimiting(RateLimitingExtensions.AuthenticatedPolicy)]
+    [ProducesResponseType(typeof(PageResult<Person>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<PageResult<Person>>> Get([FromQuery] int page, [FromQuery] string? name)
+    {
+        var result = await _mediator.Send(new PeopleQuery { Page = page, NameFilter = name ?? string.Empty });
+        return Ok(result);
+    }
+
+    [HttpGet("{id}")]
+    [Authorize(Policy = CensusPolicies.CanReadPeople)]
+    [EnableRateLimiting(RateLimitingExtensions.AuthenticatedPolicy)]
+    [ProducesResponseType(typeof(Person), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<Person>> Get(string id)
+    {
+        var result = await _mediator.Send(new PersonByIdQuery { Id = id });
+        if (result is null)
         {
-            Mediator = mediator;
+            throw new NotFoundException("Pessoa não encontrada.");
         }
 
-        // GET api/values
-        [HttpGet]
-        public async Task<ActionResult<PageResult<Person>>> Get([FromQuery] int page, [FromQuery] string name)
-        {
-            var result = await Mediator.Send(new PeopleQuery() { Page = page, NameFilter = name});
-            return Ok(result);
-        }
+        return Ok(result);
+    }
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Person>> Get(string id)
-        {
-            var result = await Mediator.Send(new PersonByIdQuery() { Id = id });
-            return Ok(result);
-        }
+    [HttpPost]
+    [Authorize(Policy = CensusPolicies.CanManagePeople)]
+    [EnableRateLimiting(RateLimitingExtensions.AuthenticatedPolicy)]
+    [ProducesResponseType(typeof(CreatedPerson), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<CreatedPerson>> Post([FromBody] CreatePersonCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return CreatedAtAction(nameof(Get), new { id = result.Id, version = "1.0" }, result);
+    }
 
-        // POST api/values
-        [HttpPost]
-        public async Task<CreatedPerson> Post([FromBody] CreatePersonCommand command)
-        {
-            var result = await Mediator.Send(command);
-            return result;
-        }
+    [HttpPut("{id}")]
+    [Authorize(Policy = CensusPolicies.CanManagePeople)]
+    [EnableRateLimiting(RateLimitingExtensions.AuthenticatedPolicy)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Put(string id, [FromBody] UpdatePersonCommand command)
+    {
+        command.Id = id;
+        await _mediator.Send(command);
+        return NoContent();
+    }
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Put(string id, [FromBody] UpdatePersonCommand command)
-        {
-            command.Id = id;
-            await Mediator.Send(command);
-            return Ok();
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
-        {
-            await Mediator.Send(new DeletePersonCommand() { Id = id});
-            return NoContent();
-        }
+    [HttpDelete("{id}")]
+    [Authorize(Policy = CensusPolicies.CanManagePeople)]
+    [EnableRateLimiting(RateLimitingExtensions.AuthenticatedPolicy)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(string id)
+    {
+        await _mediator.Send(new DeletePersonCommand { Id = id });
+        return NoContent();
     }
 }

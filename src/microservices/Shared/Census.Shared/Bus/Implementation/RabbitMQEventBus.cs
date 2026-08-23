@@ -1,5 +1,7 @@
 ﻿using Census.Shared.Bus.Interfaces;
+using Census.Shared.Observability;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Polly;
@@ -7,79 +9,103 @@ using Polly.Retry;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using System;
-using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Census.Shared.Bus.Implementation
 {
     public class RabbitMQEventBus : IEventBus
     {
-        private static readonly byte PERSISTENT_MODE = 2;
-        private static readonly string CENSUS_EXCHANGE = "census";
+        private const byte PersistentMode = 2;
+        private const string CensusExchange = "census";
+        private const string DeadLetterExchange = "census.dlx";
+        private const string RetryHeader = "x-retry-count";
+        private const string CorrelationHeader = "x-correlation-id";
+        private const int MaxConsumeRetries = 3;
 
-        private readonly IPersistentConnection PersistentConnection;
-        private readonly IEventBusSubscriptionsManager SubscriptionManager;
-        private readonly ILogger<RabbitMQEventBus> Logger;
-        private readonly IService­Provider Service­Provider;
-        private readonly String QueueName;
-        private readonly int RetryCount;
+        private readonly IPersistentConnection _persistentConnection;
+        private readonly IEventBusSubscriptionsManager _subscriptionManager;
+        private readonly ILogger<RabbitMQEventBus> _logger;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly EventBusMetrics _metrics;
+        private readonly string? _queueName;
+        private readonly bool _publisherOnly;
+        private readonly int _retryCount;
 
-        private IModel ConsumerChannel;
+        private IModel? _consumerChannel;
+        private bool _consumerStarted;
 
-        public RabbitMQEventBus(IPersistentConnection persistentConnection, 
+        public RabbitMQEventBus(
+            IPersistentConnection persistentConnection,
             IEventBusSubscriptionsManager subscriptionManager,
             ILogger<RabbitMQEventBus> logger,
             IConfiguration configuration,
-            IService­Provider service­Provider,
-            int retryCount = 5)
+            IServiceProvider serviceProvider,
+            EventBusMetrics metrics)
         {
-            QueueName = configuration.GetSection("RabbitMqConnection")["QueueName"];
-            PersistentConnection = persistentConnection;
-            SubscriptionManager = subscriptionManager;
-            Service­Provider = service­Provider;
-            Logger = logger;
-            RetryCount = retryCount;
-            ConsumerChannel = CreateConsumerChannel();
+            var rabbitMqConfig = configuration.GetSection("RabbitMqConnection");
+            _queueName = rabbitMqConfig["QueueName"];
+            _publisherOnly = bool.TryParse(rabbitMqConfig["PublisherOnly"], out var publisherOnly) && publisherOnly;
+            _retryCount = int.Parse(rabbitMqConfig["retryCount"] ?? "5");
+
+            _persistentConnection = persistentConnection;
+            _subscriptionManager = subscriptionManager;
+            _serviceProvider = serviceProvider;
+            _logger = logger;
+            _metrics = metrics;
+
+            EnsureExchangeExists();
         }
 
-        public async void Publish(IntegrationEvent @event)
+        public async Task PublishAsync(IntegrationEvent @event, CancellationToken cancellationToken = default)
         {
             ConnectToBroker();
-            var policy = CreateRetryPolicy(@event);
-
+            var policy = CreatePublishRetryPolicy(@event);
             var eventName = @event.GetType().Name;
-            using (var channel = PersistentConnection.CreateModel())
+
+            if (string.IsNullOrEmpty(@event.CorrelationId))
             {
-                var message = JsonConvert.SerializeObject(@event);
-                var body = Encoding.UTF8.GetBytes(message);
-
-                await policy.ExecuteAsync(() =>
-                {
-                    var properties = channel.CreateBasicProperties();
-                    properties.DeliveryMode = PERSISTENT_MODE;
-
-                    Logger.LogTrace("Publicando evento no RabbitMQ: {EventId}", @event.Id);
-
-                    channel.BasicPublish(
-                        exchange: CENSUS_EXCHANGE,
-                        routingKey: eventName,
-                        mandatory: true,
-                        basicProperties: properties,
-                        body: body);
-
-                    return Task.CompletedTask;
-                });
+                @event.CorrelationId = CorrelationContext.EnsureCorrelationId();
             }
+
+            using var channel = _persistentConnection.CreateModel();
+            EnsureExchangeExists(channel);
+
+            var message = JsonConvert.SerializeObject(@event);
+            var body = Encoding.UTF8.GetBytes(message);
+
+            await policy.ExecuteAsync(_ =>
+            {
+                var properties = channel.CreateBasicProperties();
+                properties.DeliveryMode = PersistentMode;
+                properties.Headers = new Dictionary<string, object>
+                {
+                    [CorrelationHeader] = @event.CorrelationId ?? string.Empty
+                };
+
+                _logger.LogInformation("Publishing event {EventName} with id {EventId}", eventName, @event.Id);
+                channel.BasicPublish(
+                    exchange: CensusExchange,
+                    routingKey: eventName,
+                    mandatory: false,
+                    basicProperties: properties,
+                    body: body);
+
+                _metrics.RecordPublished(eventName);
+                return Task.CompletedTask;
+            }, cancellationToken);
         }
 
         public void Subscribe<T, TH>()
             where T : IntegrationEvent
             where TH : IIntegrationEventHandler<T>
         {
-            SubscriptionManager.AddSubscription<T, TH>();
+            if (_publisherOnly)
+            {
+                throw new InvalidOperationException("Cannot subscribe on a publisher-only event bus instance.");
+            }
+
+            _subscriptionManager.AddSubscription<T, TH>();
             StartBasicConsume();
         }
 
@@ -87,134 +113,263 @@ namespace Census.Shared.Bus.Implementation
             where T : IntegrationEvent
             where TH : IIntegrationEventHandler<T>
         {
-            var eventName = SubscriptionManager.GetEventKey<T>();
-            Logger.LogInformation("Unsubscribing from event {EventName}", eventName);
-            SubscriptionManager.RemoveSubscription<T, TH>();
+            var eventName = _subscriptionManager.GetEventKey<T>();
+            _logger.LogInformation("Unsubscribing from event {EventName}", eventName);
+            _subscriptionManager.RemoveSubscription<T, TH>();
+        }
+
+        private void EnsureExchangeExists(IModel? channel = null)
+        {
+            ConnectToBroker();
+            var ownsChannel = channel == null;
+            channel ??= _persistentConnection.CreateModel();
+
+            try
+            {
+                channel.ExchangeDeclare(CensusExchange, ExchangeType.Fanout, durable: true);
+                channel.ExchangeDeclare(DeadLetterExchange, ExchangeType.Fanout, durable: true);
+            }
+            finally
+            {
+                if (ownsChannel)
+                {
+                    channel.Dispose();
+                }
+            }
         }
 
         private void StartBasicConsume()
         {
-            Logger.LogTrace("Starting RabbitMQ basic consume");
-
-            if (ConsumerChannel == null)
+            if (_consumerStarted || _publisherOnly || string.IsNullOrWhiteSpace(_queueName))
             {
-                Logger.LogError("Não foi possível iniciar consumidor pois o canal não foi instanciado");
                 return;
             }
 
-            var consumer = new AsyncEventingBasicConsumer(ConsumerChannel);
-
+            _consumerChannel = CreateConsumerChannel();
+            var consumer = new AsyncEventingBasicConsumer(_consumerChannel);
             consumer.Received += OnMessageReceived;
 
-            ConsumerChannel.BasicConsume(
-                queue: QueueName,
+            _consumerChannel.BasicConsume(
+                queue: _queueName,
                 autoAck: false,
                 consumer: consumer);
+
+            _consumerStarted = true;
+            _logger.LogInformation("Started consuming queue {QueueName}", _queueName);
         }
 
         private async Task OnMessageReceived(object sender, BasicDeliverEventArgs eventArgs)
         {
-            var eventName = eventArgs.RoutingKey;
-            var message = Encoding.UTF8.GetString(eventArgs.Body.ToArray());
-
-            try
+            if (_consumerChannel == null)
             {
-                await ProcessEvent(eventName, message);
-                ConsumerChannel.BasicAck(eventArgs.DeliveryTag, multiple: false);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "----- Erro ao processar mensagem \"{Message}\"", message);
-                ConsumerChannel.BasicNack(eventArgs.DeliveryTag, multiple: false, requeue: true);
-            }
-        }
-
-        private async Task ProcessEvent(string eventName, string message)
-        {
-            Logger.LogTrace("Processando evento do RabbitMQ: {EventName}", eventName);
-
-            if (!SubscriptionManager.HasSubscriptionsForEvent(eventName))
-            {
-                Logger.LogWarning("Não existem consumidores para o evendo do RabbitMQ: {EventName}", eventName);
                 return;
             }
 
-            var subscriptions = SubscriptionManager.GetHandlersForEvent(eventName);    
-            foreach (var subscription in subscriptions)
-            {
-                var handler = Service­Provider.GetService(subscription.HandlerType);
-                var method = subscription.HandlerType.GetMethod("Handle");
-                var eventType = SubscriptionManager.GetEventTypeByName(eventName);
-                var integrationEvent = (IntegrationEvent)JsonConvert.DeserializeObject(message, eventType);
+            var eventName = eventArgs.RoutingKey;
+            var message = Encoding.UTF8.GetString(eventArgs.Body.ToArray());
+            var retryCount = GetRetryCount(eventArgs.BasicProperties);
+            var correlationId = GetCorrelationId(eventArgs.BasicProperties);
 
-                //Forcing asynchronous call
-                await Task.Yield();
-                await (Task) method.Invoke(handler, new object[] { integrationEvent });
+            if (!string.IsNullOrEmpty(correlationId))
+            {
+                CorrelationContext.CorrelationId = correlationId;
+            }
+
+            try
+            {
+                await ProcessEventAsync(eventName, message);
+                _consumerChannel.BasicAck(eventArgs.DeliveryTag, multiple: false);
+                _metrics.RecordConsumed(eventName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to process message for event {EventName}", eventName);
+                _metrics.RecordFailed(eventName);
+
+                if (retryCount >= MaxConsumeRetries)
+                {
+                    PublishToDeadLetter(eventArgs, eventName, retryCount);
+                    _consumerChannel.BasicAck(eventArgs.DeliveryTag, multiple: false);
+                    _metrics.RecordDeadLettered(eventName);
+                    return;
+                }
+
+                PublishToRetry(eventArgs, eventName, retryCount + 1);
+                _consumerChannel.BasicAck(eventArgs.DeliveryTag, multiple: false);
+                _metrics.RecordRetried(eventName);
             }
         }
-    
-        private AsyncRetryPolicy CreateRetryPolicy(IntegrationEvent @event)
+
+        private async Task ProcessEventAsync(string eventName, string message)
         {
-            return RetryPolicy.Handle<BrokerUnreachableException>()
-                .Or<SocketException>()
-                .WaitAndRetryAsync(RetryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+            if (!_subscriptionManager.HasSubscriptionsForEvent(eventName))
+            {
+                _logger.LogWarning("No handlers registered for event {EventName}", eventName);
+                return;
+            }
+
+            var subscriptions = _subscriptionManager.GetHandlersForEvent(eventName);
+            var eventType = _subscriptionManager.GetEventTypeByName(eventName);
+            var integrationEvent = (IntegrationEvent)JsonConvert.DeserializeObject(message, eventType)!;
+
+            using var scope = _serviceProvider.CreateScope();
+
+            foreach (var subscription in subscriptions)
+            {
+                var handler = scope.ServiceProvider.GetService(subscription.HandlerType);
+                if (handler == null)
                 {
-                    Logger.LogWarning(ex, "Não foi possível publicar o evento: {EventId} após {Timeout}s ({ExceptionMessage})", 
-                        @event.Id, $"{time.TotalSeconds:n1}", ex.Message);
-                });
+                    continue;
+                }
+
+                var processedEventStore = scope.ServiceProvider.GetService<IProcessedEventStore>();
+                if (processedEventStore != null &&
+                    await processedEventStore.HasBeenProcessedAsync(integrationEvent.Id))
+                {
+                    _logger.LogInformation(
+                        "Skipping duplicate event {EventId} of type {EventName}",
+                        integrationEvent.Id,
+                        eventName);
+                    _metrics.RecordDuplicate(eventName);
+                    continue;
+                }
+
+                var method = subscription.HandlerType.GetMethod("Handle");
+                await (Task)method!.Invoke(handler, new object[] { integrationEvent })!;
+
+                if (processedEventStore != null)
+                {
+                    await processedEventStore.MarkAsProcessedAsync(integrationEvent.Id, eventName);
+                }
+            }
+        }
+
+        private void PublishToRetry(BasicDeliverEventArgs eventArgs, string eventName, int retryCount)
+        {
+            using var channel = _persistentConnection.CreateModel();
+            var properties = channel.CreateBasicProperties();
+            properties.DeliveryMode = PersistentMode;
+            properties.Headers = new Dictionary<string, object>
+            {
+                [RetryHeader] = retryCount
+            };
+
+            if (eventArgs.BasicProperties.Headers?.TryGetValue(CorrelationHeader, out var correlation) == true)
+            {
+                properties.Headers[CorrelationHeader] = correlation;
+            }
+
+            channel.BasicPublish(
+                exchange: CensusExchange,
+                routingKey: eventName,
+                mandatory: false,
+                basicProperties: properties,
+                body: eventArgs.Body.ToArray());
+        }
+
+        private void PublishToDeadLetter(BasicDeliverEventArgs eventArgs, string eventName, int retryCount)
+        {
+            using var channel = _persistentConnection.CreateModel();
+            var properties = channel.CreateBasicProperties();
+            properties.DeliveryMode = PersistentMode;
+            properties.Headers = new Dictionary<string, object>
+            {
+                [RetryHeader] = retryCount,
+                ["x-original-event"] = eventName
+            };
+
+            channel.BasicPublish(
+                exchange: DeadLetterExchange,
+                routingKey: eventName,
+                mandatory: false,
+                basicProperties: properties,
+                body: eventArgs.Body.ToArray());
+
+            _logger.LogError(
+                "Message for event {EventName} moved to dead-letter exchange after {RetryCount} retries",
+                eventName,
+                retryCount);
+        }
+
+        private static int GetRetryCount(IBasicProperties properties)
+        {
+            if (properties.Headers != null &&
+                properties.Headers.TryGetValue(RetryHeader, out var value))
+            {
+                return Convert.ToInt32(value);
+            }
+
+            return 0;
+        }
+
+        private static string? GetCorrelationId(IBasicProperties properties)
+        {
+            if (properties.Headers != null &&
+                properties.Headers.TryGetValue(CorrelationHeader, out var value))
+            {
+                return Encoding.UTF8.GetString((byte[])value);
+            }
+
+            return null;
+        }
+
+        private AsyncRetryPolicy CreatePublishRetryPolicy(IntegrationEvent @event)
+        {
+            return Policy
+                .Handle<BrokerUnreachableException>()
+                .Or<SocketException>()
+                .WaitAndRetryAsync(
+                    _retryCount,
+                    retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                    (ex, time) =>
+                    {
+                        _logger.LogWarning(
+                            ex,
+                            "Could not publish event {EventId} after {Timeout}s",
+                            @event.Id,
+                            time.TotalSeconds);
+                    });
         }
 
         private IModel CreateConsumerChannel()
         {
             ConnectToBroker();
-            Logger.LogTrace("Criando canal para o consumidor no RabbitMQ");
-            var channel = PersistentConnection.CreateModel();
-            CreateExchange(channel);
-            CreateQueue(channel);
-            SettingExceptionCallBack(channel);
+            var channel = _persistentConnection.CreateModel();
+            EnsureExchangeExists(channel);
+            DeclareConsumerQueue(channel);
+            channel.CallbackException += (_, ea) =>
+            {
+                _logger.LogWarning(ea.Exception, "Recreating consumer channel");
+                _consumerChannel?.Dispose();
+                _consumerChannel = CreateConsumerChannel();
+                StartBasicConsume();
+            };
+
             return channel;
         }
 
-        private void SettingExceptionCallBack(IModel channel)
+        private void DeclareConsumerQueue(IModel channel)
         {
-            channel.CallbackException += (sender, ea) =>
-            {
-                Logger.LogWarning(ea.Exception, "Recriando canal para o consumidor no RabbitMQ");
-                ConsumerChannel.Dispose();
-                ConsumerChannel = CreateConsumerChannel();
-                StartBasicConsume();
-            };
-        }
+            var deadLetterQueue = $"{_queueName}.dlq";
+            channel.QueueDeclare(deadLetterQueue, durable: true, exclusive: false, autoDelete: false);
+            channel.QueueBind(deadLetterQueue, DeadLetterExchange, string.Empty);
 
-        private void CreateExchange(IModel channel)
-        {
-            channel.ExchangeDeclare(CENSUS_EXCHANGE, ExchangeType.Fanout);
-        }
+            channel.QueueDeclare(
+                queue: _queueName,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
 
-        private void CreateQueue(IModel channel)
-        {
-            var args = new Dictionary<string, object>
-            {
-                { "x-message-ttl", 10000 }
-            };
-
-            channel.QueueDeclare(queue: QueueName,
-                                 durable: true,
-                                 exclusive: false,
-                                 autoDelete: false,
-                                 arguments: args);
-
-
-            channel.QueueBind(QueueName, CENSUS_EXCHANGE, string.Empty);
+            channel.QueueBind(_queueName!, CensusExchange, string.Empty);
         }
 
         private void ConnectToBroker()
         {
-            if (!PersistentConnection.IsConnected)
+            if (!_persistentConnection.IsConnected)
             {
-                PersistentConnection.TryConnect();
+                _persistentConnection.TryConnect();
             }
         }
-
     }
 }

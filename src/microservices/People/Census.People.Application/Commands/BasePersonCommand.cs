@@ -4,7 +4,7 @@ namespace Census.People.Application.Commands
 {
     public abstract class BasePersonCommand
     {
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         public string Name { get; set; }
 
@@ -16,9 +16,9 @@ namespace Census.People.Application.Commands
 
         public Address Address { get; set; }
 
-        public string FatherId { get; set; }
+        public string? FatherId { get; set; }
 
-        public string MotherId { get; set; }
+        public string? MotherId { get; set; }
 
     }
 }

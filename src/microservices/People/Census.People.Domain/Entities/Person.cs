@@ -17,9 +17,9 @@ namespace Census.People.Domain.Entities
 
         public Address Address { get; set; }
 
-        public string FatherId { get; set; }
+        public string? FatherId { get; set; }
 
-        public string MotherId { get; set; }
+        public string? MotherId { get; set; }
 
         public override bool Equals(object obj)
         {

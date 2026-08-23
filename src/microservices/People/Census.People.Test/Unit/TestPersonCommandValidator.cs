@@ -1,5 +1,6 @@
 ﻿using Census.People.Application.Commands;
 using Census.People.Application.Validation;
+using Census.People.Domain.Entities;
 using Census.People.Domain.Values;
 using System.Threading.Tasks;
 using Xunit;
@@ -65,6 +66,21 @@ namespace Census.People.Test.Unit
 
             //Assert
             Assert.Equal("Sex", result.Errors[0].PropertyName);
+        }
+
+        [Fact]
+        public async Task TestValidator_SameFatherAndMother()
+        {
+            var validator = new PersonCommandValidator();
+            var createCommand = MakeCommand();
+            createCommand.FatherId = "same-id";
+            createCommand.MotherId = "same-id";
+
+            var result = await validator.ValidateAsync(createCommand);
+
+            Assert.Contains(result.Errors, error => error.PropertyName == "MotherId");
+            Assert.Contains(result.Errors, error =>
+                error.ErrorMessage == "Pai e mãe não podem ser a mesma pessoa.");
         }
 
 

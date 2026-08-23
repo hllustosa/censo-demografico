@@ -17,33 +17,34 @@ namespace Census.FamilyTree.Application.Events
 
         public async Task Handle(PersonUpdatedEvent @event)
         {
-            if(HasChangedParents(@event))
+            var oldNode = ToNode(@event.OldPersonData);
+            var newNode = ToNode(@event.NewPersonData);
+
+            if (HasChangedParents(@event))
             {
-                var oldNode = new PersonFamilyTreeNode()
-                {
-                    Id = @event.OldPersonData.Id,
-                    Name = @event.OldPersonData.Name,
-                    FatherId = @event.OldPersonData.FatherId,
-                    MotherId = @event.OldPersonData.MotherId
-                };
-
-                var newNode = new PersonFamilyTreeNode()
-                {
-                    Id = @event.NewPersonData.Id,
-                    Name = @event.NewPersonData.Name,
-                    FatherId = @event.NewPersonData.FatherId,
-                    MotherId = @event.NewPersonData.MotherId
-                };
-
                 await PersonFamilyTreeRepository.UpdateNode(oldNode, newNode);
+                return;
             }
+
+            await PersonFamilyTreeRepository.AddNode(newNode);
         }
 
-        private bool HasChangedParents(PersonUpdatedEvent @event)
+        private static bool HasChangedParents(PersonUpdatedEvent @event)
         {
             return @event.OldPersonData.FatherId != @event.NewPersonData.FatherId
                 || @event.OldPersonData.MotherId != @event.NewPersonData.MotherId
                 || @event.OldPersonData.Name != @event.NewPersonData.Name;
+        }
+
+        private static PersonFamilyTreeNode ToNode(PersonDTO person)
+        {
+            return new PersonFamilyTreeNode
+            {
+                Id = person.Id,
+                Name = person.Name,
+                FatherId = person.FatherId,
+                MotherId = person.MotherId,
+            };
         }
     }
 }

@@ -46,7 +46,7 @@ public class TestApi
     private async Task CreatePerson()
     {
         var createPersonCommand = MakeCreateCommand();
-        var result = await TestContext.Post("/api/person", createPersonCommand);
+        var result = await TestContext.Post("/api/v1/person", createPersonCommand);
         var resultString = await result.Content.ReadAsStringAsync();
         var createdPerson = JsonConvert.DeserializeObject<CreatedPerson>(resultString);
         Assert.Equal(new CreatedPerson() { Id = "id" }, createdPerson);
@@ -55,7 +55,7 @@ public class TestApi
     private async Task UpdatePerson()
     {
         var updatePersonCommand = MakeUpdateCommand();
-        var result = await TestContext.Put("/api/person/id", updatePersonCommand);
+        var result = await TestContext.Put("/api/v1/person/id", updatePersonCommand);
         Assert.Equal(System.Net.HttpStatusCode.OK, result.StatusCode);
     }
 
@@ -63,7 +63,7 @@ public class TestApi
     {
         try
         {
-            var result = await TestContext.Delete("/api/person/id");
+            var result = await TestContext.Delete("/api/v1/person/id");
             Assert.Equal(System.Net.HttpStatusCode.NoContent, result.StatusCode);
         }
         catch(ValidationException) {}
@@ -71,7 +71,7 @@ public class TestApi
 
     private async Task CheckRetrievedPerson(Person expected)
     {
-        var result = await TestContext.Get("/api/person/id");
+        var result = await TestContext.Get("/api/v1/person/id");
         var resultString = await result.Content.ReadAsStringAsync();
         var person = JsonConvert.DeserializeObject<Person>(resultString);
         Assert.Equal(expected, person);
@@ -79,7 +79,7 @@ public class TestApi
 
     private async Task<bool> CheckEmptyRetrievedPerson()
     {
-        var result = await TestContext.Get("/api/person/id");
+        var result = await TestContext.Get("/api/v1/person/id");
         var resultString = await result.Content.ReadAsStringAsync();
         var person = JsonConvert.DeserializeObject<Person>(resultString);
         Assert.Null(person);

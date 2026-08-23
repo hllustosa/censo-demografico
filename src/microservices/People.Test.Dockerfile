@@ -1,6 +1,5 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:2.2 AS build-env
-WORKDIR /testapp
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+WORKDIR /app
 
-# Copy everything else and test
 COPY ./ ./
-ENTRYPOINT ["dotnet", "test", "./People/Census.People.Test/Census.People.Test.csproj"]
+RUN dotnet test ./People/Census.People.Test/Census.People.Test.csproj -c Release --no-restore || dotnet restore ./People/Census.People.Test && dotnet test ./People/Census.People.Test/Census.People.Test.csproj -c Release

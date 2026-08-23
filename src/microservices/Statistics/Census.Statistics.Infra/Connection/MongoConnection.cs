@@ -7,36 +7,31 @@ namespace Census.Statistics.Infra.Connection
 {
     public class MongoConnection : IMongoConnection
     {
-        readonly string MONGO_DATABASE = "statsdb";
+        private const string MongoDatabase = "statsdb";
+        private const string MongoCategoryCollection = "categories";
+        private const string MongoCityCategoryCollection = "citycategories";
 
-        readonly string MONGO_CATEGORY_COLLECTION = "categories";
-
-        readonly string MONGO_CITY_CATEGORY_COLLECTION = "citycategories";
-
-        MongoClient MongoClient { get; set; }
+        private readonly MongoClient _mongoClient;
 
         public MongoConnection(IConfiguration configuration)
         {
             var conventionPack = new ConventionPack { new IgnoreExtraElementsConvention(true) };
-            ConventionRegistry.Register("IgnoreExtraElements", conventionPack, type => true);
-            MongoClient = new MongoClient(configuration.GetConnectionString("DefaultConnection"));
+            ConventionRegistry.Register("IgnoreExtraElements", conventionPack, _ => true);
+            _mongoClient = new MongoClient(configuration.GetConnectionString("DefaultConnection"));
         }
 
-        public MongoClient GetClient()
-        {
-            return MongoClient;
-        }
+        public MongoClient GetClient() => _mongoClient;
+
+        public IMongoDatabase GetDatabase() => _mongoClient.GetDatabase(MongoDatabase);
 
         public IMongoCollection<PersonCategoryCounter> GetPersonCategoriesCollection()
         {
-            var database = MongoClient.GetDatabase(MONGO_DATABASE);
-            return database.GetCollection<PersonCategoryCounter>(MONGO_CATEGORY_COLLECTION);
+            return GetDatabase().GetCollection<PersonCategoryCounter>(MongoCategoryCollection);
         }
 
         public IMongoCollection<PersonPerCityCounter> GetPersonPerCityCounterCollection()
         {
-            var database = MongoClient.GetDatabase(MONGO_DATABASE);
-            return database.GetCollection<PersonPerCityCounter>(MONGO_CITY_CATEGORY_COLLECTION);
+            return GetDatabase().GetCollection<PersonPerCityCounter>(MongoCityCategoryCollection);
         }
     }
 }

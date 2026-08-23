@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore CensoDemografico.sln
+
+      - name: Build
+        run: dotnet build CensoDemografico.sln --configuration Release --no-restore
+
+      - name: Test with coverage
+        run: dotnet test CensoDemografico.sln --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: build-test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build People image
+        run: docker build -f ./src/microservices/People.Dockerfile ./src/microservices
+
+      - name: Build Statistics image
+        run: docker build -f ./src/microservices/Statistics.Dockerfile ./src/microservices
+
+      - name: Build FamilyTree image
+        run: docker build -f ./src/microservices/FamilyTree.Dockerfile ./src/microservices
+
+      - name: Build Frontend image
+        run: docker build -f ./src/frontend/Census.WebApp/Dockerfile ./src/frontend/Census.WebApp
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install and test frontend
+        working-directory: src/frontend/Census.WebApp/ClientApp
+        run: |
+          npm ci
+          npm test -- --watchAll=false

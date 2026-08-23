@@ -1,0 +1,315 @@
+:root {
+  color-scheme: light;
+  --census-ink: #0f172a;
+  --census-muted: #64748b;
+  --census-surface: #f1f5f9;
+  --census-accent: #2563eb;
+  --census-header: #0f172a;
+  --census-sider: #1e3a5f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: "DM Sans", system-ui, sans-serif;
+  color: var(--census-ink);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(37, 99, 235, 0.1), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(15, 23, 42, 0.06), transparent 50%),
+    var(--census-surface);
+}
+
+a {
+  color: inherit;
+}
+
+.page-title {
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.page-subtitle {
+  color: var(--census-muted);
+  margin: 4px 0 0;
+}
+
+.census-shell {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.census-content {
+  height: 100%;
+  overflow: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.census-content > * {
+  min-width: 0;
+}
+
+.census-sider {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.census-sider__menu {
+  flex: 1;
+  overflow: auto;
+  border: none !important;
+}
+
+.census-sider__user {
+  padding: 12px 16px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.census-sider__user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.88);
+  padding: 8px;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.census-sider__user-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.census-sider__user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.census-sider__brand {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.census-sider__brand--collapsed {
+  padding: 0 16px;
+  justify-content: center;
+}
+
+.census-sider__brand-title {
+  color: #fff !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.census-filters-card {
+  margin-bottom: 16px;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.census-filters-card .ant-card-body {
+  display: flex;
+  justify-content: center;
+}
+
+.census-filters-card .ant-form {
+  justify-content: center;
+}
+
+.census-dashboard-stat-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 328px;
+  text-align: center;
+}
+
+.census-dashboard-stat-card .ant-statistic {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.census-family-tree-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.census-family-tree-page > .ant-row {
+  flex: 1;
+  min-height: 0;
+}
+
+.census-family-tree-page > .ant-row > .ant-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.census-family-tree-page .census-family-tree-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.census-family-tree-page .census-family-tree-card > .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.census-table-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.census-table-page__table {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.census-table-page__table .ant-table {
+  table-layout: fixed;
+}
+
+.census-table-page__table .ant-table-thead > tr > th {
+  position: relative;
+}
+
+.census-resize-handle {
+  position: absolute;
+  right: -5px;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: 10px;
+  cursor: col-resize;
+  user-select: none;
+}
+
+.census-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 25%;
+  bottom: 25%;
+  left: 4px;
+  width: 2px;
+  border-radius: 1px;
+  background: transparent;
+}
+
+.census-resize-handle:hover::after,
+.census-resize-handle:active::after {
+  background: rgba(37, 99, 235, 0.55);
+}
+
+.census-table-page__table .ant-table-body {
+  overflow-x: auto !important;
+}
+
+.census-fade-in {
+  animation: censusFadeIn 180ms ease-out;
+}
+
+@keyframes censusFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(37, 99, 235, 0.75)),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.login-card {
+  width: min(420px, 100%);
+  border: none !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25) !important;
+}
+
+.family-tree-canvas {
+  flex: 1;
+  min-height: 360px;
+  height: 100%;
+  background: #f8fafc;
+  border-radius: 0 0 14px 14px;
+  overflow: hidden;
+}
+
+.family-tree-canvas__placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  min-height: 360px;
+}
+
+.person-node {
+  min-width: 180px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.person-node__name {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.person-node__meta {
+  font-size: 12px;
+  color: var(--census-muted);
+}

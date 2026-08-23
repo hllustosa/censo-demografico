@@ -1,27 +1,27 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using MediatR;
+﻿using MediatR;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace Census.People.Application.Behaviour
 {
     public class LoggingBehaviour<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-       where TRequest : IRequest<TResponse>
+       where TRequest : notnull
     {
-        private readonly ILogger<LoggingBehaviour<TRequest, TResponse>> Logger;
+        private readonly ILogger<LoggingBehaviour<TRequest, TResponse>> _logger;
 
         public LoggingBehaviour(ILogger<LoggingBehaviour<TRequest, TResponse>> logger)
         {
-            Logger = logger;
+            _logger = logger;
         }
 
-        public Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken, RequestHandlerDelegate<TResponse> next)
+        public async Task<TResponse> Handle(
+            TRequest request,
+            RequestHandlerDelegate<TResponse> next,
+            CancellationToken cancellationToken)
         {
             var name = typeof(TRequest).Name;
-            Logger.LogInformation("Census People Request: {Name} {@Request}", name, JsonConvert.SerializeObject(request));
-            return next();
+            _logger.LogInformation("Census People Request: {Name} {@Request}", name, JsonConvert.SerializeObject(request));
+            return await next();
         }
-
     }
 }

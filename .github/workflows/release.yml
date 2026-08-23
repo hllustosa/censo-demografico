@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Test
+        run: |
+          dotnet restore CensoDemografico.sln
+          dotnet test CensoDemografico.sln --configuration Release
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push images
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          REGISTRY=ghcr.io/${{ github.repository_owner }}
+
+          docker build -f ./src/microservices/People.Dockerfile -t $REGISTRY/census-people:$VERSION ./src/microservices
+          docker build -f ./src/microservices/Statistics.Dockerfile -t $REGISTRY/census-statistics:$VERSION ./src/microservices
+          docker build -f ./src/microservices/FamilyTree.Dockerfile -t $REGISTRY/census-familytree:$VERSION ./src/microservices
+          docker build -f ./src/frontend/Census.WebApp/Dockerfile -t $REGISTRY/census-front:$VERSION ./src/frontend/Census.WebApp
+
+          docker push $REGISTRY/census-people:$VERSION
+          docker push $REGISTRY/census-statistics:$VERSION
+          docker push $REGISTRY/census-familytree:$VERSION
+          docker push $REGISTRY/census-front:$VERSION
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

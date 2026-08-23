@@ -1,6 +1,7 @@
 ﻿using Census.People.Domain.Entities;
 using Census.People.Domain.Interfaces;
 using Census.Shared.Bus.Event;
+using Census.Shared.Web.Exceptions;
 using FluentValidation;
 using FluentValidation.Results;
 using System;
@@ -20,18 +21,65 @@ namespace Census.People.Application.Commands
 
         public async Task Validate(Person person)
         {
+            if (HasSameParent(person))
+            {
+                throw new ValidationException(new List<ValidationFailure>
+                {
+                    new("FatherId", "Pai e mãe não podem ser a mesma pessoa."),
+                    new("MotherId", "Pai e mãe não podem ser a mesma pessoa."),
+                });
+            }
+
             if (HasDefinedFather(person))
-                await CheckIfExists(person.FatherId, "FatherId");
+                await CheckIfExists(person.FatherId!, "FatherId");
 
             if (HasDefinedMother(person))
-                await CheckIfExists(person.MotherId, "MotherId");
+                await CheckIfExists(person.MotherId!, "MotherId");
+
+            if (!string.IsNullOrEmpty(person.Id))
+            {
+                await ValidateNoCycle(person, person.FatherId, "FatherId");
+                await ValidateNoCycle(person, person.MotherId, "MotherId");
+            }
+        }
+
+        private async Task ValidateNoCycle(Person person, string? proposedParentId, string field)
+        {
+            if (string.IsNullOrEmpty(proposedParentId))
+            {
+                return;
+            }
+
+            if (await PersonRepository.IsAncestorOf(person.Id, proposedParentId))
+            {
+                throw new ValidationException(
+                    new List<ValidationFailure>
+                    {
+                        new(field, "Não é possível definir um descendente como pai ou mãe."),
+                    });
+            }
+        }
+
+        private static bool HasSameParent(Person person)
+        {
+            return HasDefinedFather(person)
+                && HasDefinedMother(person)
+                && person.FatherId == person.MotherId;
         }
 
         public async Task CheckIfExists(string id, string field)
         {
             var person = await PersonRepository.GetPersonById(id);
-            if (person == null) throw new ValidationException(
-                new List<ValidationFailure>() { new ValidationFailure(field, "Valor Inválido") });
+            if (person == null)
+            {
+                if (field == "Id")
+                {
+                    throw new NotFoundException("Pessoa não encontrada.");
+                }
+
+                throw new ValidationException(
+                    new List<ValidationFailure> { new(field, "Pessoa referenciada não encontrada.") });
+            }
         }
 
         public Person RequestToEntity(BasePersonCommand request)

@@ -5,12 +5,14 @@ using Census.FamilyTree.Infra.Connection;
 using Census.FamilyTree.Infra.Repository;
 using Census.Shared.Bus.Event;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace Census.FamilyTree.Test.Integration
 {
+    [Collection("Neo4jIntegration")]
     public class TestEventHandler
     {
         INeo4jConnection Connection { get; set; }
@@ -19,7 +21,13 @@ namespace Census.FamilyTree.Test.Integration
 
         public TestEventHandler()
         {
-            var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Neo4j:Uri"] = Neo4jTestConfiguration.ResolveUri(),
+                })
+                .Build();
             Connection = new Neo4jConnection(config);
             PersonFamilyTreeRepository = new PersonFamilyTreeRepository(Connection);
         }

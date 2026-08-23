@@ -1,16 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Neo4jClient" Version="4.0.0" />
-    <PackageReference Include="System.Collections" Version="4.3.0" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Neo4jClient" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\Census.Shared\Census.Shared.csproj" />
+    <ProjectReference Include="..\Census.FamilyTree.Application\Census.FamilyTree.Application.csproj" />
     <ProjectReference Include="..\Census.FamilyTree.Domain\Census.FamilyTree.Domain.csproj" />
   </ItemGroup>
 

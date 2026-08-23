@@ -1,34 +1,54 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
-
     <IsPackable>false</IsPackable>
+    <Neo4jRunSettingsFile>$(MSBuildProjectDirectory)/Generated.neo4j.runsettings</Neo4jRunSettingsFile>
+    <RunSettingsFilePath>$(Neo4jRunSettingsFile)</RunSettingsFilePath>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="appsettings.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
-    <PackageReference Include="xunit" Version="2.4.0" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
-    <PackageReference Include="coverlet.collector" Version="1.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Census.FamilyTree.Application\Census.FamilyTree.Application.csproj" />
-    <ProjectReference Include="..\Census.FamilyTree.Domain\Census.FamilyTree.Domain.csproj" />
-    <ProjectReference Include="..\Census.FamilyTree.Infra\Census.FamilyTree.Infra.csproj" />
-  </ItemGroup>
+  <Target Name="ConfigureNeo4jTestUri" BeforeTargets="VSTest">
+    <Exec Command="docker inspect neo4j --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'" ConsoleToMSBuild="true" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="Neo4jTestIp" />
+    </Exec>
+    <PropertyGroup>
+      <Neo4jTestIpTrimmed>$([System.String]::Copy('$(Neo4jTestIp)').Trim())</Neo4jTestIpTrimmed>
+      <Neo4jTestUri Condition="'$(Neo4jTestIpTrimmed)' != ''">http://$(Neo4jTestIpTrimmed):7474/db/data</Neo4jTestUri>
+      <Neo4jTestUri Condition="'$(Neo4jTestUri)' == ''">http://localhost:7474/db/data</Neo4jTestUri>
+    </PropertyGroup>
+    <ReadLinesFromFile File="$(MSBuildProjectDirectory)/neo4j.runsettings.template">
+      <Output TaskParameter="Lines" ItemName="RunSettingsTemplateLine" />
+    </ReadLinesFromFile>
+    <ItemGroup>
+      <RunSettingsLine Include="@(RunSettingsTemplateLine->Replace('__NEO4J_URI__', '$(Neo4jTestUri)'))" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(Neo4jRunSettingsFile)" Lines="@(RunSettingsLine)" Overwrite="true" />
+  </Target>
 
   <ItemGroup>
     <Content Include="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Testcontainers.Neo4j" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Census.FamilyTree.Api\Census.FamilyTree.Api.csproj" />
+    <ProjectReference Include="..\Census.FamilyTree.Application\Census.FamilyTree.Application.csproj" />
+    <ProjectReference Include="..\Census.FamilyTree.Domain\Census.FamilyTree.Domain.csproj" />
+    <ProjectReference Include="..\Census.FamilyTree.Infra\Census.FamilyTree.Infra.csproj" />
   </ItemGroup>
 
 </Project>

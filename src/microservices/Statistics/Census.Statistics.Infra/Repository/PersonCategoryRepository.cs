@@ -9,7 +9,7 @@ using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace Census.People.Infra.Repository
+namespace Census.Statistics.Infra.Repository
 {
     public class PersonCategoryRepository : IPersonCategoryRepository
     {

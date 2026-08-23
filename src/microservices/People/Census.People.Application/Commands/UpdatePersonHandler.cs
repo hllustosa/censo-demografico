@@ -1,35 +1,31 @@
-﻿using Census.People.Domain.Entities;
+﻿using Census.People.Application.Services;
+using Census.People.Domain.Entities;
 using Census.People.Domain.Interfaces;
 using Census.Shared.Bus.Event;
-using Census.Shared.Bus.Interfaces;
 using MediatR;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Census.People.Application.Commands
 {
     public class UpdatePersonHandler : BasePersonCommandHandler, IRequestHandler<UpdatePersonCommand>
     {
-        IPersonRepository PersonRepository { get; set; }
+        private readonly IPersonRepository _personRepository;
+        private readonly IIntegrationEventPublisher _eventPublisher;
 
-        IEventBus EventBus { get; set; }
-
-        public UpdatePersonHandler(IPersonRepository personRepository, IEventBus eventBus) : base(personRepository)
+        public UpdatePersonHandler(IPersonRepository personRepository, IIntegrationEventPublisher eventPublisher) : base(personRepository)
         {
-            PersonRepository = personRepository;
-            EventBus = eventBus;
+            _personRepository = personRepository;
+            _eventPublisher = eventPublisher;
         }
 
-        public async Task<Unit> Handle(UpdatePersonCommand request, CancellationToken cancellationToken)
+        public async Task Handle(UpdatePersonCommand request, CancellationToken cancellationToken)
         {
             Person person = RequestToEntity(request);
             await CheckIfExists(person.Id, "Id");
             await Validate(person);
-            
-            var oldPerson = await PersonRepository.GetPersonById(person.Id);
-            await PersonRepository.Update(person);
-            EventBus.Publish(CreateEvent(oldPerson, person));
-            return Unit.Value;
+
+            var oldPerson = await _personRepository.GetPersonById(person.Id);
+            await _personRepository.Update(person);
+            await _eventPublisher.PublishAsync(CreateEvent(oldPerson, person), cancellationToken);
         }
 
         private PersonUpdatedEvent CreateEvent(Person oldPerson, Person newPerson)

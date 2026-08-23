@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <EnvironmentVariables>
+      <NEO4J_URI>__NEO4J_URI__</NEO4J_URI>
+    </EnvironmentVariables>
+  </RunConfiguration>
+</RunSettings>

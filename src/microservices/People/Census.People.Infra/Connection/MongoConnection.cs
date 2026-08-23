@@ -6,21 +6,21 @@ namespace Census.People.Infra.Connection
 {
     public class MongoConnection : IMongoConnection
     {
-        readonly string MONGO_DATABASE = "peopledb";
+        private const string MongoDatabase = "peopledb";
+        private const string MongoCollection = "people";
 
-        readonly string MONGO_COLLECTION = "people";
-
-        MongoClient MongoClient { get; set; }
+        private readonly MongoClient _mongoClient;
 
         public MongoConnection(IConfiguration configuration)
         {
-            MongoClient = new MongoClient(configuration.GetConnectionString("DefaultConnection"));
+            _mongoClient = new MongoClient(configuration.GetConnectionString("DefaultConnection"));
         }
+
+        public IMongoDatabase GetDatabase() => _mongoClient.GetDatabase(MongoDatabase);
 
         public IMongoCollection<Person> GetPeopleCollection()
         {
-            var database = MongoClient.GetDatabase(MONGO_DATABASE);
-            return database.GetCollection<Person>(MONGO_COLLECTION);
+            return GetDatabase().GetCollection<Person>(MongoCollection);
         }
     }
 }

@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: people
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['people:8080']
+
+  - job_name: statistics
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['statistics:8080']
+
+  - job_name: familytree
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['family:8080']
+
+  - job_name: otel-collector
+    static_configs:
+      - targets: ['otel-collector:8889']

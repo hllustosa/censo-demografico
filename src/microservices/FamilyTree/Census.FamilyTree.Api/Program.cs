@@ -1,24 +1,91 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using Census.FamilyTree.Application.Queries;
+using Census.FamilyTree.Application.Validation;
+using Census.FamilyTree.Application.Behaviour;
+using Census.FamilyTree.Application.Events;
+using Census.FamilyTree.Application.Services;
+using Census.FamilyTree.Domain.Repository;
+using Census.FamilyTree.Infra.Connection;
+using Census.FamilyTree.Infra.ProcessedEvents;
+using Census.FamilyTree.Infra.Repository;
+using Census.FamilyTree.Infra.Services;
+using Census.Shared.Bus;
+using Census.Shared.Bus.Event;
+using Census.Shared.Bus.Interfaces;
+using Census.Shared.Observability;
+using Census.Shared.Web;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using MediatR;
 
-namespace Census.FamilyTree.Api
+var builder = WebApplication.CreateBuilder(args);
+
+builder.AddCensusObservability("familytree-service");
+
+builder.Services.AddServiceDefaults("familytree-service");
+builder.Services.AddControllers();
+builder.Services.AddCensusApiVersioning();
+builder.Services.AddCensusOpenApi("FamilyTree");
+builder.Services.AddCensusAuthentication(builder.Configuration);
+builder.Services.AddCensusRateLimiting();
+builder.Services.AddMediatR(configuration =>
+    configuration.RegisterServicesFromAssembly(typeof(FamilyTreeQuery).Assembly));
+builder.Services.AddValidatorsFromAssemblyContaining<FamilyTreeQueryValidator>();
+builder.Services.AddFluentValidationAutoValidation();
+
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient<IPersonGraphSyncService, PersonGraphSyncService>();
+
+builder.Services.AddTransient<INeo4jConnection, Neo4jConnection>();
+builder.Services.AddTransient<IPersonFamilyTreeRepository, PersonFamilyTreeRepository>();
+builder.Services.AddTransient<IProcessedEventStore, Neo4jProcessedEventStore>();
+
+builder.Services.AddTransient<PersonCreatedEventHandler>();
+builder.Services.AddTransient<PersonDeletedEventHandler>();
+builder.Services.AddTransient<PersonUpdatedEventHandler>();
+
+builder.Services.AddCors(options =>
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateWebHostBuilder(args).Build().Run();
-        }
+    options.AddDefaultPolicy(policy =>
+        policy.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
+});
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
-    }
-}
+builder.Services.AddEventBus(builder.Configuration);
+
+var rabbitSection = builder.Configuration.GetSection("RabbitMqConnection");
+var rabbitConnection = $"amqp://{rabbitSection["Username"]}:{rabbitSection["Password"]}@{rabbitSection["HostName"]}:5672";
+
+builder.Services.AddHealthChecks()
+    .AddCheck("neo4j", () =>
+    {
+        try
+        {
+            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+            var uri = builder.Configuration["Neo4j:Uri"] ?? "http://localhost:7474/db/data";
+            var response = httpClient.GetAsync(uri).GetAwaiter().GetResult();
+            return response.IsSuccessStatusCode
+                ? Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy()
+                : Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy();
+        }
+        catch (Exception ex)
+        {
+            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(ex.Message);
+        }
+    })
+    .AddRabbitMQ(rabbitConnection, name: "rabbitmq");
+
+var app = builder.Build();
+
+app.UseCensusApiPipeline();
+app.MapControllers().RequireRateLimiting(RateLimitingExtensions.GlobalPolicy);
+
+var eventBus = app.Services.GetRequiredService<IEventBus>();
+eventBus.Subscribe<PersonCreatedEvent, PersonCreatedEventHandler>();
+eventBus.Subscribe<PersonUpdatedEvent, PersonUpdatedEventHandler>();
+eventBus.Subscribe<PersonDeletedEvent, PersonDeletedEventHandler>();
+
+app.Run();
+
+public partial class Program;

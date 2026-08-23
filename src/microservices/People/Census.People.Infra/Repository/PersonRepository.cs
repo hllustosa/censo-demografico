@@ -68,6 +68,50 @@ namespace Census.People.Infra.Repository
             await collection.DeleteOneAsync(filter => filter.Id == id);
         }
 
+        public async Task<bool> IsAncestorOf(string ancestorId, string descendantId)
+        {
+            if (string.IsNullOrEmpty(ancestorId) || string.IsNullOrEmpty(descendantId))
+            {
+                return false;
+            }
+
+            var visited = new HashSet<string>();
+            var queue = new Queue<string>();
+            queue.Enqueue(descendantId);
+
+            while (queue.Count > 0)
+            {
+                var currentId = queue.Dequeue();
+                if (currentId == ancestorId)
+                {
+                    return true;
+                }
+
+                if (!visited.Add(currentId))
+                {
+                    continue;
+                }
+
+                var person = await GetPersonById(currentId);
+                if (person == null)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(person.FatherId))
+                {
+                    queue.Enqueue(person.FatherId);
+                }
+
+                if (!string.IsNullOrEmpty(person.MotherId))
+                {
+                    queue.Enqueue(person.MotherId);
+                }
+            }
+
+            return false;
+        }
+
         private PageResult<Person> CreatePagedResult(int page, IEnumerable<Person> people)
         {
             var list = people.ToList();

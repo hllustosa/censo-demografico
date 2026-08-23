@@ -1,27 +1,35 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MediatR;
+﻿using Asp.Versioning;
 using Census.FamilyTree.Application.Queries;
 using Census.FamilyTree.Domain.Entities;
-using System.Threading.Tasks;
+using Census.Shared.Auth;
+using Census.Shared.Web;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
-namespace Census.FamilyTree.Api.Controllers
+namespace Census.FamilyTree.Api.Controllers;
+
+[ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[Authorize(Policy = CensusPolicies.CanViewFamilyTree)]
+[Produces("application/json")]
+public class FamilyTreeController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class FamilyTreeController : ControllerBase
+    private readonly IMediator _mediator;
+
+    public FamilyTreeController(IMediator mediator)
     {
-        IMediator Mediator { get; set; }
+        _mediator = mediator;
+    }
 
-        public FamilyTreeController(IMediator mediator)
-        {
-            Mediator = mediator;
-        }
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<PersonFamilyTree>> GetAsync(string id, [FromQuery]uint level)
-        {
-            var result = await Mediator.Send(new FamilyTreeQuery() { PersonId = id, Level = level  });
-            return Ok(result);
-        }
+    [HttpGet("{id}")]
+    [EnableRateLimiting(RateLimitingExtensions.AuthenticatedPolicy)]
+    [ProducesResponseType(typeof(PersonFamilyTree), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PersonFamilyTree>> GetAsync(string id, [FromQuery] uint level)
+    {
+        var result = await _mediator.Send(new FamilyTreeQuery { PersonId = id, Level = level });
+        return Ok(result);
     }
 }

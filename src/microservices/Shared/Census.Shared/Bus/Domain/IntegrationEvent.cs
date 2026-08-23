@@ -12,10 +12,11 @@ namespace Census.Shared.Bus
         }
 
         [JsonConstructor]
-        public IntegrationEvent(Guid id, DateTime createDate)
+        public IntegrationEvent(Guid id, DateTime createDate, string? correlationId = null)
         {
             Id = id;
             CreationDate = createDate;
+            CorrelationId = correlationId;
         }
 
         [JsonProperty]
@@ -23,5 +24,8 @@ namespace Census.Shared.Bus
 
         [JsonProperty]
         public DateTime CreationDate { get; private set; }
+
+        [JsonProperty]
+        public string? CorrelationId { get; set; }
     }
 }

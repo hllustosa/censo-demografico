@@ -1,85 +1,74 @@
 ﻿using Census.People.Application.Commands;
+using Census.People.Application.Services;
 using Census.People.Domain.Entities;
 using Census.People.Domain.Interfaces;
 using Census.People.Domain.Values;
-using Census.Shared.Bus.Interfaces;
 using FluentValidation;
 using Moq;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Census.People.Test.Unit
 {
     public class TestCreatePersonCommand
     {
-        private readonly CreatePersonHandler CreatePersonHandler;
-
-        private readonly Mock<IPersonRepository> PersonRepository = new Mock<IPersonRepository>();
-
-        private readonly Mock<IEventBus> EventBus = new Mock<IEventBus>();
+        private readonly CreatePersonHandler _createPersonHandler;
+        private readonly Mock<IPersonRepository> _personRepository = new();
+        private readonly Mock<IIntegrationEventPublisher> _eventPublisher = new();
 
         public TestCreatePersonCommand()
         {
-            CreatePersonHandler = new CreatePersonHandler(PersonRepository.Object, EventBus.Object);
+            _createPersonHandler = new CreatePersonHandler(_personRepository.Object, _eventPublisher.Object);
         }
 
         [Fact]
-        public async void TestCreateValidPerson()
+        public async Task TestCreateValidPerson()
         {
-            // Arrange
             SetupSave();
             SetupGetPersonById(new Person());
             var command = CreatePersonCommand();
 
-            // Act
-            var result = await CreatePersonHandler.Handle(command, CancellationToken.None);
+            var result = await _createPersonHandler.Handle(command, CancellationToken.None);
 
-            // Assert
             Assert.NotNull(result);
         }
 
         [Fact]
-        public async void TestCreatePersonInvalidFather()
+        public async Task TestCreatePersonInvalidFather()
         {
-            // Arrange
             SetupSave();
             SetupGetPersonById("1", null);
-            SetupGetPersonById("2", new Person());            
+            SetupGetPersonById("2", new Person());
             var command = CreatePersonCommand();
 
-            // Act & assert
             await Assert.ThrowsAsync<ValidationException>(
-                async () => await CreatePersonHandler.Handle(command, CancellationToken.None));
+                async () => await _createPersonHandler.Handle(command, CancellationToken.None));
         }
 
         [Fact]
-        public async void TestCreatePersonInvalidMother()
+        public async Task TestCreatePersonInvalidMother()
         {
-            // Arrange
             SetupSave();
             SetupGetPersonById("1", new Person());
             SetupGetPersonById("2", null);
             var command = CreatePersonCommand();
 
-            // Act & assert
             await Assert.ThrowsAsync<ValidationException>(
-                async () => await CreatePersonHandler.Handle(command, CancellationToken.None));
+                async () => await _createPersonHandler.Handle(command, CancellationToken.None));
         }
 
-        private void SetupGetPersonById(string id, Person person)
+        private void SetupGetPersonById(string id, Person? person)
         {
-            PersonRepository.Setup(x => x.GetPersonById(id)).Returns(Task.FromResult<Person>(person));
+            _personRepository.Setup(x => x.GetPersonById(id)).Returns(Task.FromResult(person));
         }
 
         private void SetupGetPersonById(Person person)
         {
-            PersonRepository.Setup(x => x.GetPersonById(It.IsAny<string>())).Returns(Task.FromResult<Person>(person));
+            _personRepository.Setup(x => x.GetPersonById(It.IsAny<string>())).Returns(Task.FromResult<Person?>(person));
         }
 
         private void SetupSave()
         {
-            PersonRepository.Setup(x => x.Save(It.IsAny<Person>()));
+            _personRepository.Setup(x => x.Save(It.IsAny<Person>())).Returns(Task.CompletedTask);
         }
 
         private static CreatePersonCommand CreatePersonCommand()

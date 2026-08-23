@@ -1,56 +1,45 @@
 ﻿using Census.People.Application.Commands;
+using Census.People.Application.Services;
 using Census.People.Domain.Entities;
 using Census.People.Domain.Interfaces;
-using Census.Shared.Bus.Interfaces;
 using FluentValidation;
 using Moq;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Census.People.Test.Unit
 {
     public class TestDeletePersonCommand
     {
-        private readonly DeletePersonHandler DeletePersonHandler;
-
-        private readonly Mock<IPersonRepository> PersonRepository = new Mock<IPersonRepository>();
-
-        private readonly Mock<IEventBus> EventBus = new Mock<IEventBus>();
+        private readonly DeletePersonHandler _deletePersonHandler;
+        private readonly Mock<IPersonRepository> _personRepository = new();
+        private readonly Mock<IIntegrationEventPublisher> _eventPublisher = new();
 
         public TestDeletePersonCommand()
         {
-            DeletePersonHandler = new DeletePersonHandler(PersonRepository.Object, EventBus.Object);
+            _deletePersonHandler = new DeletePersonHandler(_personRepository.Object, _eventPublisher.Object);
         }
 
         [Fact]
         public async Task TestDeleteExistingPerson()
         {
-            // Arrange
             SetupGetPersonById(new Person());
-            var command = new DeletePersonCommand() { Id = "1"};
+            var command = new DeletePersonCommand { Id = "1" };
 
-            // Act
-            var result = await DeletePersonHandler.Handle(command, CancellationToken.None);
-
-            // Assert
-            Assert.IsType<MediatR.Unit>(result);
+            await _deletePersonHandler.Handle(command, CancellationToken.None);
         }
 
         [Fact]
         public async Task TestDeleteNonExistingPerson()
         {
-            // Arrange
-            var command = new DeletePersonCommand() { Id = "1" };
+            var command = new DeletePersonCommand { Id = "1" };
 
-            // Act & assert
             await Assert.ThrowsAsync<ValidationException>(
-                async () => await DeletePersonHandler.Handle(command, CancellationToken.None));
+                async () => await _deletePersonHandler.Handle(command, CancellationToken.None));
         }
 
         private void SetupGetPersonById(Person person)
         {
-            PersonRepository.Setup(x => x.GetPersonById(It.IsAny<string>())).Returns(Task.FromResult<Person>(person));
+            _personRepository.Setup(x => x.GetPersonById(It.IsAny<string>())).Returns(Task.FromResult<Person?>(person));
         }
     }
 }

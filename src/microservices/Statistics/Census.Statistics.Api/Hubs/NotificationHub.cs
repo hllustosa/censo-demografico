@@ -1,21 +1,10 @@
-﻿using Census.Statistics.Application;
+﻿using Census.Shared.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using System.Threading.Tasks;
 
-namespace Census.Statistics.Api.Hubs
+namespace Census.Statistics.Api.Hubs;
+
+[Authorize(Policy = CensusPolicies.CanViewDashboard)]
+public class NotificationHub : Hub
 {
-    public class NotificationHub : Hub, INotificationSender
-    {
-        IHubContext<NotificationHub> Hub;
-
-        public NotificationHub(IHubContext<NotificationHub> notificationHub)
-        {
-            Hub = notificationHub;
-        }
-
-        public async Task NotifyAll()
-        {
-            await Hub.Clients.All.SendAsync("Notify");
-        }
-    }
 }

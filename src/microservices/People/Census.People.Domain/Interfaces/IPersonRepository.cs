@@ -14,5 +14,7 @@ namespace Census.People.Domain.Interfaces
         Task Update(Person person);
 
         Task Delete(string id);
+
+        Task<bool> IsAncestorOf(string ancestorId, string descendantId);
     }
 }

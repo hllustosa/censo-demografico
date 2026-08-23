@@ -1,9 +1,11 @@
 ﻿using Census.FamilyTree.Domain.Entities;
 using Census.FamilyTree.Domain.Repository;
 using Census.FamilyTree.Infra.Connection;
+using Neo4jClient;
 using Neo4jClient.Transactions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Census.FamilyTree.Infra.Repository
@@ -19,151 +21,218 @@ namespace Census.FamilyTree.Infra.Repository
 
         public async Task<PersonFamilyTree> GetFamilyTree(string personId, uint level)
         {
-            var nodesDictionary = await ExecuteQuery(personId, level);
-            var nodes = CreateNodesList(nodesDictionary);
-            var relationships = CreateRelationshipsList(nodesDictionary, nodes);
-            return new PersonFamilyTree() { Nodes = nodes, Relationships = relationships };
+            var client = await Neo4JConnection.GetClient();
+            var root = await GetNodeById(client, personId);
+            if (root == null)
+            {
+                return EmptyTree();
+            }
+
+            await EnsureRelationshipsFromProperties(client, root);
+
+            var nodes = await CollectNodesWithinLevel(client, root, level);
+            var nodeList = nodes.Values.ToList();
+            return new PersonFamilyTree
+            {
+                Nodes = nodeList,
+                Relationships = CreateRelationshipsList(nodes, nodeList)
+            };
         }
 
-        public async Task AddNode(PersonFamilyTreeNode personFamilyTreeNode)
-        {
-            var client = await Neo4JConnection.GetClient();
-            var txClient = (ITransactionalGraphClient)client;
-            using (var transaction = txClient.BeginTransaction())
-            {
-                try
-                {
-                    await AddNewNode(client, personFamilyTreeNode);
-                    await transaction.CommitAsync();
-                }
-                catch (Exception e)
-                {
-                    await transaction.RollbackAsync();
-                    throw e;
-                }
-            }
-        }
+        public Task AddNode(PersonFamilyTreeNode personFamilyTreeNode) =>
+            UpsertPerson(personFamilyTreeNode);
 
         public async Task UpdateNode(PersonFamilyTreeNode oldNode, PersonFamilyTreeNode newNode)
         {
             var client = await Neo4JConnection.GetClient();
             var txClient = (ITransactionalGraphClient)client;
-            using (var transaction = txClient.BeginTransaction())
+            using var transaction = txClient.BeginTransaction();
+
+            try
             {
-                try
+                if (!string.IsNullOrEmpty(oldNode.FatherId) && oldNode.FatherId != newNode.FatherId)
                 {
-                    var children = await GetChildren(oldNode.Id);
-                    await DeleteNode(client, oldNode);
-                    await AddNewNode(client, newNode);
-                    await ReacreateRelationships(newNode, client, children);
-                    await transaction.CommitAsync();
+                    await RemoveParentRelationships(client, oldNode.FatherId, newNode.Id);
                 }
-                catch (Exception e)
+
+                if (!string.IsNullOrEmpty(oldNode.MotherId) && oldNode.MotherId != newNode.MotherId)
                 {
-                    await transaction.RollbackAsync();
-                    throw e;
+                    await RemoveParentRelationships(client, oldNode.MotherId, newNode.Id);
                 }
+
+                await UpsertPersonInternal(client, newNode);
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
             }
         }
 
-       
         public async Task RemoveNode(PersonFamilyTreeNode personFamilyTreeNode)
         {
             var client = await Neo4JConnection.GetClient();
-            var txClient = (ITransactionalGraphClient)client;
-            using (var transaction = txClient.BeginTransaction())
-            {
+            await DeleteNode(client, personFamilyTreeNode);
+        }
 
-                try
-                {
-                    await DeleteNode(client, personFamilyTreeNode);
-                    await transaction.CommitAsync();
-                }
-                catch (Exception e)
-                {
-                    await transaction.RollbackAsync();
-                    throw e;
-                }
+        internal async Task UpsertPerson(PersonFamilyTreeNode personFamilyTreeNode)
+        {
+            var client = await Neo4JConnection.GetClient();
+            var txClient = (ITransactionalGraphClient)client;
+            using var transaction = txClient.BeginTransaction();
+
+            try
+            {
+                await UpsertPersonInternal(client, personFamilyTreeNode);
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
             }
         }
 
-        private static async Task AddNewNode(Neo4jClient.GraphClient client, PersonFamilyTreeNode personFamilyTreeNode)
+        private static async Task UpsertPersonInternal(
+            GraphClient client,
+            PersonFamilyTreeNode personFamilyTreeNode)
         {
-            var idFather = personFamilyTreeNode.FatherId;
-            var idMother = personFamilyTreeNode.MotherId;
-            var idChild = personFamilyTreeNode.Id;
-
-            await CreateNode(client, personFamilyTreeNode);
-            await CreateParentRelationship(client, idFather, idChild);
-            await CreateChildRelationship(client, idFather, idChild);
-            await CreateParentRelationship(client, idMother, idChild);
-            await CreateChildRelationship(client, idMother, idChild);
+            await UpsertNode(client, personFamilyTreeNode);
+            await EnsureRelationshipsFromProperties(client, personFamilyTreeNode);
         }
 
-        private async static Task CreateNode(Neo4jClient.GraphClient client, PersonFamilyTreeNode personFamilyTreeNode)
+        private static async Task UpsertNode(GraphClient client, PersonFamilyTreeNode node)
         {
-            await client.Cypher.Create("(n:Person { Id: $id, Name: $name, FatherId: $fatherId, MotherId: $motherId })")
-                    .WithParam("id", personFamilyTreeNode.Id)
-                    .WithParam("name", personFamilyTreeNode.Name)
-                    .WithParam("fatherId", personFamilyTreeNode.FatherId)
-                    .WithParam("motherId", personFamilyTreeNode.MotherId)
-                    .ExecuteWithoutResultsAsync();
-        }
-
-
-        private async static Task CreateParentRelationship(Neo4jClient.GraphClient client, string idParent, string idChild)
-        {
-            if (String.IsNullOrEmpty(idParent))
+            var existing = await GetNodeById(client, node.Id);
+            if (existing == null)
+            {
+                await CreateNode(client, node);
                 return;
+            }
 
-            await client.Cypher.Match("(a:Person),(b:Person)")
-                    .Where("a.Id = $idParent AND b.Id = $idChild")
-                    .WithParam("idParent", idParent)
-                    .WithParam("idChild", idChild)
-                    .Create("(a)-[r:PARENT]->(b)")
-                    .ExecuteWithoutResultsAsync();
+            await client.Cypher
+                .Match("(n:Person { Id: $id })")
+                .Set("n.Name = $name")
+                .Set("n.FatherId = $fatherId")
+                .Set("n.MotherId = $motherId")
+                .WithParam("id", node.Id)
+                .WithParam("name", node.Name)
+                .WithParam("fatherId", node.FatherId ?? "")
+                .WithParam("motherId", node.MotherId ?? "")
+                .ExecuteWithoutResultsAsync();
         }
 
-        private async static Task CreateChildRelationship(Neo4jClient.GraphClient client, string idParent, string idChild)
+        private static async Task CreateNode(GraphClient client, PersonFamilyTreeNode node)
         {
-            if (String.IsNullOrEmpty(idParent))
+            await client.Cypher
+                .Create("(n:Person { Id: $id, Name: $name, FatherId: $fatherId, MotherId: $motherId })")
+                .WithParam("id", node.Id)
+                .WithParam("name", node.Name)
+                .WithParam("fatherId", node.FatherId ?? "")
+                .WithParam("motherId", node.MotherId ?? "")
+                .ExecuteWithoutResultsAsync();
+        }
+
+        private static async Task EnsureRelationshipsFromProperties(
+            GraphClient client,
+            PersonFamilyTreeNode node)
+        {
+            await CreateParentRelationship(client, node.FatherId, node.Id);
+            await CreateChildRelationship(client, node.FatherId, node.Id);
+            await CreateParentRelationship(client, node.MotherId, node.Id);
+            await CreateChildRelationship(client, node.MotherId, node.Id);
+
+            var children = await client.Cypher
+                .Match("(child:Person)")
+                .Where("(child.FatherId = $parentId OR child.MotherId = $parentId)")
+                .WithParam("parentId", node.Id)
+                .Return(child => child.As<PersonFamilyTreeNode>())
+                .ResultsAsync;
+
+            foreach (var child in children.Select(NormalizeNode).Where(child => child != null))
+            {
+                await CreateParentRelationship(client, node.Id, child!.Id);
+                await CreateChildRelationship(client, node.Id, child.Id);
+            }
+        }
+
+        private static async Task CreateParentRelationship(GraphClient client, string? idParent, string idChild)
+        {
+            if (string.IsNullOrEmpty(idParent))
+            {
                 return;
+            }
 
-            await client.Cypher.Match("(a:Person),(b:Person)")
-                    .Where("a.Id = $idParent AND b.Id = $idChild")
-                    .WithParam("idParent", idParent)
-                    .WithParam("idChild", idChild)
-                    .Create("(b)-[r:CHILD]->(a)")
-                    .ExecuteWithoutResultsAsync();
+            await client.Cypher
+                .Match("(a:Person { Id: $idParent }), (b:Person { Id: $idChild })")
+                .Merge("(a)-[:PARENT]->(b)")
+                .WithParam("idParent", idParent)
+                .WithParam("idChild", idChild)
+                .ExecuteWithoutResultsAsync();
         }
 
-
-        private async static Task DeleteNode(Neo4jClient.GraphClient client, PersonFamilyTreeNode personFamilyTreeNode)
+        private static async Task CreateChildRelationship(GraphClient client, string? idParent, string idChild)
         {
-            await client.Cypher.Match("(a:Person)")
-                    .Where("a.Id = $id")
-                    .WithParam("id", personFamilyTreeNode.Id)
-                    .DetachDelete("a")
-                    .ExecuteWithoutResultsAsync();
+            if (string.IsNullOrEmpty(idParent))
+            {
+                return;
+            }
+
+            await client.Cypher
+                .Match("(a:Person { Id: $idParent }), (b:Person { Id: $idChild })")
+                .Merge("(b)-[:CHILD]->(a)")
+                .WithParam("idParent", idParent)
+                .WithParam("idChild", idChild)
+                .ExecuteWithoutResultsAsync();
         }
 
-        private static List<PersonFamilyTreeRelationship> CreateRelationshipsList(Dictionary<string, PersonFamilyTreeNode> nodesDictionary, List<PersonFamilyTreeNode> nodes)
+        private static async Task RemoveParentRelationships(GraphClient client, string parentId, string childId)
+        {
+            await client.Cypher
+                .Match("(a:Person { Id: $parentId })-[r:PARENT]->(b:Person { Id: $childId })")
+                .Delete("r")
+                .WithParam("parentId", parentId)
+                .WithParam("childId", childId)
+                .ExecuteWithoutResultsAsync();
+
+            await client.Cypher
+                .Match("(b:Person { Id: $childId })-[r:CHILD]->(a:Person { Id: $parentId })")
+                .Delete("r")
+                .WithParam("parentId", parentId)
+                .WithParam("childId", childId)
+                .ExecuteWithoutResultsAsync();
+        }
+
+        private static async Task DeleteNode(GraphClient client, PersonFamilyTreeNode personFamilyTreeNode)
+        {
+            await client.Cypher
+                .Match("(a:Person)")
+                .Where("a.Id = $id")
+                .WithParam("id", personFamilyTreeNode.Id)
+                .DetachDelete("a")
+                .ExecuteWithoutResultsAsync();
+        }
+
+        private static List<PersonFamilyTreeRelationship> CreateRelationshipsList(
+            Dictionary<string, PersonFamilyTreeNode> nodesDictionary,
+            List<PersonFamilyTreeNode> nodes)
         {
             var relationships = new List<PersonFamilyTreeRelationship>();
             foreach (var node in nodes)
             {
-                if (node.MotherId != null && nodesDictionary.ContainsKey(node.MotherId))
+                if (!string.IsNullOrEmpty(node.MotherId) && nodesDictionary.ContainsKey(node.MotherId))
                 {
-                    relationships.Add(new PersonFamilyTreeRelationship()
+                    relationships.Add(new PersonFamilyTreeRelationship
                     {
                         ChildId = node.Id,
                         ParentId = node.MotherId
                     });
                 }
 
-                if (node.FatherId != null && nodesDictionary.ContainsKey(node.FatherId))
+                if (!string.IsNullOrEmpty(node.FatherId) && nodesDictionary.ContainsKey(node.FatherId))
                 {
-                    relationships.Add(new PersonFamilyTreeRelationship()
+                    relationships.Add(new PersonFamilyTreeRelationship
                     {
                         ChildId = node.Id,
                         ParentId = node.FatherId
@@ -174,72 +243,163 @@ namespace Census.FamilyTree.Infra.Repository
             return relationships;
         }
 
-        private static List<PersonFamilyTreeNode> CreateNodesList(Dictionary<string, PersonFamilyTreeNode> nodesDictionary)
+        private static async Task<Dictionary<string, PersonFamilyTreeNode>> CollectNodesWithinLevel(
+            GraphClient client,
+            PersonFamilyTreeNode root,
+            uint level)
         {
-            var nodes = new List<PersonFamilyTreeNode>();
-            foreach (var key in nodesDictionary.Keys)
+            var nodes = new Dictionary<string, PersonFamilyTreeNode> { [root.Id] = root };
+            if (level == 0)
             {
-                nodes.Add(nodesDictionary[key]);
+                return nodes;
+            }
+
+            var ancestorQueue = new Queue<(string Id, uint Depth)>();
+            EnqueueRelative(ancestorQueue, root.FatherId, 1);
+            EnqueueRelative(ancestorQueue, root.MotherId, 1);
+
+            while (ancestorQueue.Count > 0)
+            {
+                var (relativeId, depth) = ancestorQueue.Dequeue();
+                if (depth > level || nodes.ContainsKey(relativeId))
+                {
+                    continue;
+                }
+
+                var relative = await GetNodeById(client, relativeId);
+                if (relative == null)
+                {
+                    continue;
+                }
+
+                nodes[relative.Id] = relative;
+                await EnsureRelationshipsFromProperties(client, relative);
+
+                if (depth < level)
+                {
+                    EnqueueRelative(ancestorQueue, relative.FatherId, depth + 1);
+                    EnqueueRelative(ancestorQueue, relative.MotherId, depth + 1);
+                }
+            }
+
+            var descendantQueue = new Queue<(string Id, uint Depth)>();
+            descendantQueue.Enqueue((root.Id, 0));
+            var visitedDescendants = new HashSet<string> { root.Id };
+
+            while (descendantQueue.Count > 0)
+            {
+                var (currentId, depth) = descendantQueue.Dequeue();
+                if (depth >= level)
+                {
+                    continue;
+                }
+
+                var children = await GetChildrenByParentId(client, currentId);
+                foreach (var child in children)
+                {
+                    if (!visitedDescendants.Add(child.Id))
+                    {
+                        continue;
+                    }
+
+                    nodes[child.Id] = child;
+                    await EnsureRelationshipsFromProperties(client, child);
+
+                    var nextDepth = depth + 1;
+                    if (nextDepth < level)
+                    {
+                        descendantQueue.Enqueue((child.Id, nextDepth));
+                    }
+
+                    // Include co-parents so child edges render completely at this level.
+                    await IncludeCoParent(client, nodes, child.FatherId, currentId);
+                    await IncludeCoParent(client, nodes, child.MotherId, currentId);
+                }
             }
 
             return nodes;
         }
 
-        private async Task<List<string>> GetChildren(string personId)
+        private static async Task IncludeCoParent(
+            GraphClient client,
+            Dictionary<string, PersonFamilyTreeNode> nodes,
+            string? coParentId,
+            string knownParentId)
         {
-            var client = await Neo4JConnection.GetClient();
-
-            var results = await client.Cypher.Match("(p:Person { Id: $personId } )-[:PARENT]->(c:Person)") 
-                            .WithParam("personId", personId)
-                            .Return((p, c) => new
-                            {
-                                child = c.As<PersonFamilyTreeNode>(),
-                            }).ResultsAsync;
-
-            var children = new List<string>();
-            foreach (var record in results)
+            if (string.IsNullOrEmpty(coParentId) ||
+                coParentId == knownParentId ||
+                nodes.ContainsKey(coParentId))
             {
-                children.Add(record.child.Id);
+                return;
             }
 
-            return children;
-        }
-
-        private async Task<Dictionary<string, PersonFamilyTreeNode>> ExecuteQuery(string personId, uint level)
-        {
-            var client = await Neo4JConnection.GetClient();
-
-            //[ALERTA] Parâmetros não funcionando no limitador de saltos. Ex: código com parâmetro [*1..$level]
-            //causa exceção. Alternativamente, estou formatando a string diretamente com o valor de level
-            //Como a variável level é uint, não é possível ocorrer uma injeção de comando através dela.
-            var results = await client.Cypher.Match("(p:Person { Id: $personId } )-[*1.."+ level + "]->(c:Person)")
-                            //PersonId que é inseguro consegue ser configurado via parâmetro 
-                            //sem causar exceção
-                            //.WithParam("level", level.ToString())
-                            .WithParam("personId", personId)
-                            .Return((p, c) => new
-                            {
-                                p1 = p.As<PersonFamilyTreeNode>(),
-                                p2 = c.As<PersonFamilyTreeNode>(),
-                            }).ResultsAsync;
-
-            var nodesDictionary = new Dictionary<string, PersonFamilyTreeNode>();
-            foreach (var record in results)
+            var coParent = await GetNodeById(client, coParentId);
+            if (coParent == null)
             {
-                nodesDictionary[record.p1.Id] = record.p1;
-                nodesDictionary[record.p2.Id] = record.p2;
+                return;
             }
 
-            return nodesDictionary;
+            nodes[coParent.Id] = coParent;
+            await EnsureRelationshipsFromProperties(client, coParent);
         }
 
-        private static async Task ReacreateRelationships(PersonFamilyTreeNode newNode, Neo4jClient.GraphClient client, List<string> children)
+        private static async Task<List<PersonFamilyTreeNode>> GetChildrenByParentId(
+            GraphClient client,
+            string parentId)
         {
-            foreach (var child in children)
+            var results = await client.Cypher
+                .Match("(child:Person)")
+                .Where("(child.FatherId = $parentId OR child.MotherId = $parentId)")
+                .WithParam("parentId", parentId)
+                .Return(child => child.As<PersonFamilyTreeNode>())
+                .ResultsAsync;
+
+            return results
+                .Select(NormalizeNode)
+                .Where(node => node != null)
+                .Cast<PersonFamilyTreeNode>()
+                .ToList();
+        }
+
+        private static async Task<PersonFamilyTreeNode?> GetNodeById(GraphClient client, string personId)
+        {
+            var results = await client.Cypher
+                .Match("(p:Person { Id: $personId })")
+                .WithParam("personId", personId)
+                .Return(p => p.As<PersonFamilyTreeNode>())
+                .ResultsAsync;
+
+            return NormalizeNode(results.FirstOrDefault());
+        }
+
+        private static void EnqueueRelative(Queue<(string Id, uint Depth)> queue, string? relativeId, uint depth)
+        {
+            if (!string.IsNullOrEmpty(relativeId))
             {
-                await CreateParentRelationship(client, newNode.Id, child);
-                await CreateChildRelationship(client, newNode.Id, child);
+                queue.Enqueue((relativeId, depth));
             }
         }
+
+        private static PersonFamilyTreeNode? NormalizeNode(PersonFamilyTreeNode? node)
+        {
+            if (node == null || string.IsNullOrEmpty(node.Id))
+            {
+                return null;
+            }
+
+            node.FatherId = NullIfEmpty(node.FatherId);
+            node.MotherId = NullIfEmpty(node.MotherId);
+            return node;
+        }
+
+        private static string? NullIfEmpty(string? value) =>
+            string.IsNullOrEmpty(value) ? null : value;
+
+        private static PersonFamilyTree EmptyTree() =>
+            new()
+            {
+                Nodes = new List<PersonFamilyTreeNode>(),
+                Relationships = new List<PersonFamilyTreeRelationship>()
+            };
     }
 }

@@ -1,9 +1,8 @@
-using System;
+using Census.Statistics.Domain.Interfaces;
+
+namespace Census.Statistics.Infra.Service;
 
 public class GuidGenerator : IGuidGenerator
 {
-    public string GenerateGuid()
-    {
-        return Guid.NewGuid().ToString();
-    }
+    public string GenerateGuid() => Guid.NewGuid().ToString();
 }
