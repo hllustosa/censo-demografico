@@ -10,11 +10,16 @@ namespace Census.People.Application.Commands
     {
         private readonly IPersonRepository _personRepository;
         private readonly IIntegrationEventPublisher _eventPublisher;
+        private readonly ITransactionManager _transactionManager;
 
-        public UpdatePersonHandler(IPersonRepository personRepository, IIntegrationEventPublisher eventPublisher) : base(personRepository)
+        public UpdatePersonHandler(
+            IPersonRepository personRepository,
+            IIntegrationEventPublisher eventPublisher,
+            ITransactionManager transactionManager) : base(personRepository)
         {
             _personRepository = personRepository;
             _eventPublisher = eventPublisher;
+            _transactionManager = transactionManager;
         }
 
         public async Task Handle(UpdatePersonCommand request, CancellationToken cancellationToken)
@@ -24,8 +29,19 @@ namespace Census.People.Application.Commands
             await Validate(person);
 
             var oldPerson = await _personRepository.GetPersonById(person.Id);
-            await _personRepository.Update(person);
-            await _eventPublisher.PublishAsync(CreateEvent(oldPerson, person), cancellationToken);
+
+            var transaction = await _transactionManager.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                await _personRepository.Update(person, transaction);
+                await _eventPublisher.PublishAsync(CreateEvent(oldPerson, person), transaction, cancellationToken);
+                await _transactionManager.CommitAsync(transaction, cancellationToken);
+            }
+            catch
+            {
+                await _transactionManager.RollbackAsync(transaction, cancellationToken);
+                throw;
+            }
         }
 
         private PersonUpdatedEvent CreateEvent(Person oldPerson, Person newPerson)

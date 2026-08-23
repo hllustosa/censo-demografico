@@ -1,31 +1,52 @@
 services:
   mongo:
     image: mongo:6.0.16
-    container_name: mongo
     restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-guest}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-guest}
-    ports:
-      - '27017:27017'
+    # Single-node replica set enables multi-document transactions (outbox).
+    # Auth is intentionally omitted for local DEVELOPMENT ONLY; enable auth+keyFile in real deployments.
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     networks:
       - net
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: mongosh --quiet --eval "db.hello().isWritablePrimary || db.hello().ismaster" | grep -q true
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 20s
+      retries: 12
+      start_period: 40s
+
+  mongo-init:
+    image: mongo:6.0.16
+    restart: "no"
+    depends_on:
+      - mongo
+    # Inline init avoids bind-mount path mismatches when Compose runs via a Docker socket from a devcontainer.
+    entrypoint:
+      - bash
+      - -c
+      - |
+        set -euo pipefail
+        echo "Waiting for MongoDB..."
+        until mongosh --host mongo --quiet --eval 'db.adminCommand({ ping: 1 })' >/dev/null 2>&1; do sleep 2; done
+        STATUS="$$(mongosh --host mongo --quiet --eval 'try { rs.status().ok } catch (e) { 0 }' || true)"
+        if [ "$$STATUS" = "1" ]; then
+          echo "Replica set already initialized."
+          exit 0
+        fi
+        echo "Initiating replica set rs0..."
+        mongosh --host mongo --eval 'rs.initiate({_id: "rs0", members: [{ _id: 0, host: "mongo:27017" }]})'
+        echo "Waiting for PRIMARY..."
+        until mongosh --host mongo --quiet --eval 'db.hello().isWritablePrimary' | grep -q true; do sleep 2; done
+        echo "Replica set ready."
+    networks:
+      - net
 
   neo4j:
-    image: neo4j:3.5.26
-    container_name: neo4j
+    image: neo4j:5.26.0
     restart: unless-stopped
     environment:
-      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/test}
+      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/testtest}
     ports:
       - '7474:7474'
-      - '7687:7687'
     networks:
       - net
     healthcheck:
@@ -33,17 +54,15 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 40s
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
-    container_name: rabbitmq
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-guest}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-guest}
     ports:
-      - '5672:5672'
       - '15672:15672'
     networks:
       - net
@@ -58,27 +77,27 @@ services:
     build:
       context: ./src/microservices
       dockerfile: People.Dockerfile
-    container_name: people
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: mongodb://${MONGO_INITDB_ROOT_USERNAME:-guest}:${MONGO_INITDB_ROOT_PASSWORD:-guest}@mongo:27017/?authSource=admin
+      ConnectionStrings__DefaultConnection: mongodb://mongo:27017/?replicaSet=rs0
       RabbitMqConnection__HostName: rabbitmq
       RabbitMqConnection__Username: ${RABBITMQ_DEFAULT_USER:-guest}
       RabbitMqConnection__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
       RabbitMqConnection__PublisherOnly: "true"
       RabbitMqConnection__retryCount: 5
-      Jwt__SigningKey: ${JWT_SIGNING_KEY:-CensusDevSigningKeyMustBeAtLeast32CharsLong!}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
       Jwt__Issuer: ${JWT__Issuer:-census-identity}
       Jwt__Audience: ${JWT__Audience:-census-api}
-    ports:
-      - '5001:8080'
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
     networks:
       - net
     depends_on:
       mongo:
         condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
 
@@ -86,25 +105,22 @@ services:
     build:
       context: ./src/microservices
       dockerfile: FamilyTree.Dockerfile
-    container_name: family
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      Neo4j__Uri: http://neo4j:7474/db/data
+      Neo4j__Uri: bolt://neo4j:7687
       Neo4j__Username: neo4j
-      Neo4j__Password: test
+      Neo4j__Password: ${NEO4J_PASSWORD:-testtest}
       RabbitMqConnection__HostName: rabbitmq
       RabbitMqConnection__Username: ${RABBITMQ_DEFAULT_USER:-guest}
       RabbitMqConnection__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
       RabbitMqConnection__QueueName: tree
       RabbitMqConnection__retryCount: 5
-      Services__People: http://people:8080
-      Jwt__SigningKey: ${JWT_SIGNING_KEY:-CensusDevSigningKeyMustBeAtLeast32CharsLong!}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
       Jwt__Issuer: ${JWT__Issuer:-census-identity}
       Jwt__Audience: ${JWT__Audience:-census-api}
-    ports:
-      - '5002:8080'
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
     networks:
       - net
     depends_on:
@@ -117,27 +133,27 @@ services:
     build:
       context: ./src/microservices
       dockerfile: Statistics.Dockerfile
-    container_name: statistics
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: mongodb://${MONGO_INITDB_ROOT_USERNAME:-guest}:${MONGO_INITDB_ROOT_PASSWORD:-guest}@mongo:27017/?authSource=admin
+      ConnectionStrings__DefaultConnection: mongodb://mongo:27017/?replicaSet=rs0
       RabbitMqConnection__HostName: rabbitmq
       RabbitMqConnection__Username: ${RABBITMQ_DEFAULT_USER:-guest}
       RabbitMqConnection__Password: ${RABBITMQ_DEFAULT_PASS:-guest}
       RabbitMqConnection__QueueName: statistics
       RabbitMqConnection__retryCount: 5
-      Jwt__SigningKey: ${JWT_SIGNING_KEY:-CensusDevSigningKeyMustBeAtLeast32CharsLong!}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
       Jwt__Issuer: ${JWT__Issuer:-census-identity}
       Jwt__Audience: ${JWT__Audience:-census-api}
-    ports:
-      - '5003:8080'
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
     networks:
       - net
     depends_on:
       mongo:
         condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
       rabbitmq:
         condition: service_healthy
 
@@ -145,30 +161,29 @@ services:
     build:
       context: ./src/microservices
       dockerfile: Identity.Dockerfile
-    container_name: identity
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Identity: mongodb://${MONGO_INITDB_ROOT_USERNAME:-guest}:${MONGO_INITDB_ROOT_PASSWORD:-guest}@mongo:27017/identitydb?authSource=admin
-      Jwt__SigningKey: ${JWT_SIGNING_KEY:-CensusDevSigningKeyMustBeAtLeast32CharsLong!}
+      ConnectionStrings__Identity: mongodb://mongo:27017/identitydb?replicaSet=rs0
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT_SIGNING_KEY is required}
       Jwt__Issuer: ${JWT__Issuer:-census-identity}
       Jwt__Audience: ${JWT__Audience:-census-api}
       Identity__Admin__Email: ${Identity__Admin__Email:-admin@censo.local}
-      Identity__Admin__Password: ${Identity__Admin__Password:-Admin@12345}
-    ports:
-      - '5004:8080'
+      Identity__Admin__Password: ${Identity__Admin__Password:?Identity__Admin__Password is required}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
     networks:
       - net
     depends_on:
       mongo:
         condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
 
   front:
     build:
       context: ./src/frontend/Census.WebApp
       dockerfile: Dockerfile
-    container_name: frontend
     restart: unless-stopped
     ports:
       - '8080:8080'
@@ -183,20 +198,15 @@ services:
   otel-collector:
     profiles: ["observability"]
     image: otel/opentelemetry-collector-contrib:0.106.1
-    container_name: otel-collector
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./infra/observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml
-    ports:
-      - '4317:4317'
-      - '8889:8889'
     networks:
       - net
 
   prometheus:
     profiles: ["observability"]
     image: prom/prometheus:v2.54.1
-    container_name: prometheus
     volumes:
       - ./infra/observability/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
@@ -207,24 +217,27 @@ services:
   grafana:
     profiles: ["observability"]
     image: grafana/grafana:11.1.4
-    container_name: grafana
     environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards
     ports:
       - '3000:3000'
     networks:
       - net
+    depends_on:
+      - prometheus
 
   jaeger:
     profiles: ["observability"]
     image: jaegertracing/all-in-one:1.57
-    container_name: jaeger
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
     ports:
       - '16686:16686'
-      - '4318:4318'
     networks:
       - net
 

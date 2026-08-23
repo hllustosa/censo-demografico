@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Census.Architecture.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\People\Census.People.Domain\Census.People.Domain.csproj" />
+    <ProjectReference Include="..\People\Census.People.Application\Census.People.Application.csproj" />
+    <ProjectReference Include="..\People\Census.People.Infra\Census.People.Infra.csproj" />
+    <ProjectReference Include="..\People\Census.People.Api\Census.People.Api.csproj" />
+    <ProjectReference Include="..\Statistics\Census.Statistics.Domain\Census.Statistics.Domain.csproj" />
+    <ProjectReference Include="..\Statistics\Census.Statistics.Application\Census.Statistics.Application.csproj" />
+    <ProjectReference Include="..\Statistics\Census.Statistics.Infra\Census.Statistics.Infra.csproj" />
+    <ProjectReference Include="..\FamilyTree\Census.FamilyTree.Domain\Census.FamilyTree.Domain.csproj" />
+    <ProjectReference Include="..\FamilyTree\Census.FamilyTree.Application\Census.FamilyTree.Application.csproj" />
+    <ProjectReference Include="..\FamilyTree\Census.FamilyTree.Infra\Census.FamilyTree.Infra.csproj" />
+  </ItemGroup>
+</Project>

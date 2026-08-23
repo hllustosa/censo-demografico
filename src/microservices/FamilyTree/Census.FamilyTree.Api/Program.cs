@@ -2,12 +2,10 @@
 using Census.FamilyTree.Application.Validation;
 using Census.FamilyTree.Application.Behaviour;
 using Census.FamilyTree.Application.Events;
-using Census.FamilyTree.Application.Services;
 using Census.FamilyTree.Domain.Repository;
 using Census.FamilyTree.Infra.Connection;
 using Census.FamilyTree.Infra.ProcessedEvents;
 using Census.FamilyTree.Infra.Repository;
-using Census.FamilyTree.Infra.Services;
 using Census.Shared.Bus;
 using Census.Shared.Bus.Event;
 using Census.Shared.Bus.Interfaces;
@@ -33,8 +31,6 @@ builder.Services.AddValidatorsFromAssemblyContaining<FamilyTreeQueryValidator>()
 builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddHttpClient<IPersonGraphSyncService, PersonGraphSyncService>();
 
 builder.Services.AddTransient<INeo4jConnection, Neo4jConnection>();
 builder.Services.AddTransient<IPersonFamilyTreeRepository, PersonFamilyTreeRepository>();
@@ -62,12 +58,9 @@ builder.Services.AddHealthChecks()
     {
         try
         {
-            using var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
-            var uri = builder.Configuration["Neo4j:Uri"] ?? "http://localhost:7474/db/data";
-            var response = httpClient.GetAsync(uri).GetAwaiter().GetResult();
-            return response.IsSuccessStatusCode
-                ? Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy()
-                : Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy();
+            var connection = new Neo4jConnection(builder.Configuration);
+            connection.GetClient().GetAwaiter().GetResult();
+            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy();
         }
         catch (Exception ex)
         {

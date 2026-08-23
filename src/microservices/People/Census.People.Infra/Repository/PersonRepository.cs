@@ -49,24 +49,48 @@ namespace Census.People.Infra.Repository
             return result.FirstOrDefault();
         }
 
-        public async Task Save(Person person)
+        public async Task Save(Person person, ITransaction? transaction = null)
         {
             person.Id = CreateId();
             var collection = MongoConnection.GetPeopleCollection();
-            await collection.InsertOneAsync(person);
+            var session = GetSession(transaction);
+            if (session is null)
+            {
+                await collection.InsertOneAsync(person);
+                return;
+            }
+
+            await collection.InsertOneAsync(session, person);
         }
 
-        public async Task Update(Person person)
+        public async Task Update(Person person, ITransaction? transaction = null)
         {
             var collection = MongoConnection.GetPeopleCollection();
-            await collection.ReplaceOneAsync(item => item.Id == person.Id, person);
+            var session = GetSession(transaction);
+            if (session is null)
+            {
+                await collection.ReplaceOneAsync(item => item.Id == person.Id, person);
+                return;
+            }
+
+            await collection.ReplaceOneAsync(session, item => item.Id == person.Id, person);
         }
 
-        public async Task Delete(string id)
+        public async Task Delete(string id, ITransaction? transaction = null)
         {
             var collection = MongoConnection.GetPeopleCollection();
-            await collection.DeleteOneAsync(filter => filter.Id == id);
+            var session = GetSession(transaction);
+            if (session is null)
+            {
+                await collection.DeleteOneAsync(filter => filter.Id == id);
+                return;
+            }
+
+            await collection.DeleteOneAsync(session, filter => filter.Id == id);
         }
+
+        private static IClientSessionHandle? GetSession(ITransaction? transaction) =>
+            transaction is null ? null : ((MongoSession)transaction).Session;
 
         public async Task<bool> IsAncestorOf(string ancestorId, string descendantId)
         {

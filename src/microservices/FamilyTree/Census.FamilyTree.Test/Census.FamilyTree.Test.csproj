@@ -2,27 +2,7 @@
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
-    <Neo4jRunSettingsFile>$(MSBuildProjectDirectory)/Generated.neo4j.runsettings</Neo4jRunSettingsFile>
-    <RunSettingsFilePath>$(Neo4jRunSettingsFile)</RunSettingsFilePath>
   </PropertyGroup>
-
-  <Target Name="ConfigureNeo4jTestUri" BeforeTargets="VSTest">
-    <Exec Command="docker inspect neo4j --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'" ConsoleToMSBuild="true" IgnoreExitCode="true">
-      <Output TaskParameter="ConsoleOutput" PropertyName="Neo4jTestIp" />
-    </Exec>
-    <PropertyGroup>
-      <Neo4jTestIpTrimmed>$([System.String]::Copy('$(Neo4jTestIp)').Trim())</Neo4jTestIpTrimmed>
-      <Neo4jTestUri Condition="'$(Neo4jTestIpTrimmed)' != ''">http://$(Neo4jTestIpTrimmed):7474/db/data</Neo4jTestUri>
-      <Neo4jTestUri Condition="'$(Neo4jTestUri)' == ''">http://localhost:7474/db/data</Neo4jTestUri>
-    </PropertyGroup>
-    <ReadLinesFromFile File="$(MSBuildProjectDirectory)/neo4j.runsettings.template">
-      <Output TaskParameter="Lines" ItemName="RunSettingsTemplateLine" />
-    </ReadLinesFromFile>
-    <ItemGroup>
-      <RunSettingsLine Include="@(RunSettingsTemplateLine->Replace('__NEO4J_URI__', '$(Neo4jTestUri)'))" />
-    </ItemGroup>
-    <WriteLinesToFile File="$(Neo4jRunSettingsFile)" Lines="@(RunSettingsLine)" Overwrite="true" />
-  </Target>
 
   <ItemGroup>
     <Content Include="appsettings.json">

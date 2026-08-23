@@ -14,10 +14,25 @@ namespace Census.People.Test.Unit
         private readonly UpdatePersonHandler _updateCommandHandler;
         private readonly Mock<IPersonRepository> _personRepository = new();
         private readonly Mock<IIntegrationEventPublisher> _eventPublisher = new();
+        private readonly Mock<ITransactionManager> _transactionManager = new();
+        private readonly Mock<ITransaction> _transaction = new();
 
         public TestUpdatePersonCommand()
         {
-            _updateCommandHandler = new UpdatePersonHandler(_personRepository.Object, _eventPublisher.Object);
+            _transactionManager
+                .Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(_transaction.Object);
+            _transactionManager
+                .Setup(x => x.CommitAsync(It.IsAny<ITransaction>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+            _transactionManager
+                .Setup(x => x.RollbackAsync(It.IsAny<ITransaction>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _updateCommandHandler = new UpdatePersonHandler(
+                _personRepository.Object,
+                _eventPublisher.Object,
+                _transactionManager.Object);
         }
 
         [Fact]
@@ -29,12 +44,12 @@ namespace Census.People.Test.Unit
             var command = CreateUpdatePersonCommand();
 
             await _updateCommandHandler.Handle(command, CancellationToken.None);
+            _transactionManager.Verify(x => x.CommitAsync(_transaction.Object, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
         public async Task TestUpdatePersonInvalidFather()
         {
-            // Arrange
             SetupUpdate();
             SetupGetPersonById("1", new Person());
             SetupGetPersonById("2", null);
@@ -42,7 +57,6 @@ namespace Census.People.Test.Unit
             SetupAncestorChecks(false);
             var command = CreateUpdatePersonCommand();
 
-            // Act & assert
             await Assert.ThrowsAsync<ValidationException>(
                 async () => await _updateCommandHandler.Handle(command, CancellationToken.None));
         }
@@ -95,7 +109,9 @@ namespace Census.People.Test.Unit
 
         private void SetupUpdate()
         {
-            _personRepository.Setup(x => x.Update(It.IsAny<Person>())).Returns(Task.CompletedTask);
+            _personRepository
+                .Setup(x => x.Update(It.IsAny<Person>(), It.IsAny<ITransaction?>()))
+                .Returns(Task.CompletedTask);
         }
 
         private void SetupAncestorChecks(bool isAncestor)

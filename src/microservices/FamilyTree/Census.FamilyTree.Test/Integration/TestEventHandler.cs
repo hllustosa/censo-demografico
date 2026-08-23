@@ -5,6 +5,7 @@ using Census.FamilyTree.Infra.Connection;
 using Census.FamilyTree.Infra.Repository;
 using Census.Shared.Bus.Event;
 using Microsoft.Extensions.Configuration;
+using Neo4jClient.Transactions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,39 +16,32 @@ namespace Census.FamilyTree.Test.Integration
     [Collection("Neo4jIntegration")]
     public class TestEventHandler
     {
-        INeo4jConnection Connection { get; set; }
+        private readonly INeo4jConnection _connection;
+        private readonly IPersonFamilyTreeRepository _personFamilyTreeRepository;
 
-        IPersonFamilyTreeRepository PersonFamilyTreeRepository { get; set; }
-
-        public TestEventHandler()
+        public TestEventHandler(Neo4jFixture fixture)
         {
             var config = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
-                .AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["Neo4j:Uri"] = Neo4jTestConfiguration.ResolveUri(),
-                })
+                .AddInMemoryCollection(fixture.ConfigurationOverrides())
                 .Build();
-            Connection = new Neo4jConnection(config);
-            PersonFamilyTreeRepository = new PersonFamilyTreeRepository(Connection);
+            _connection = new Neo4jConnection(config);
+            _personFamilyTreeRepository = new PersonFamilyTreeRepository(_connection);
         }
 
         [Fact]
         public async Task TestPersonCreateEventHandler()
         {
-            //Arrange
             await SetupData();
-            var handler = new PersonCreatedEventHandler(PersonFamilyTreeRepository);
+            var handler = new PersonCreatedEventHandler(_personFamilyTreeRepository);
             var @event = new PersonCreatedEvent()
             {
                 Person = CreatePerson1()
             };
 
-            //Act
             await handler.Handle(@event);
 
-            //Assert
-            var result = await PersonFamilyTreeRepository.GetFamilyTree("6", 1);
+            var result = await _personFamilyTreeRepository.GetFamilyTree("6", 1);
             Assert.NotEmpty(result.Nodes.Where(item => item.Id == "3"));
             Assert.NotEmpty(result.Nodes.Where(item => item.Id == "4"));
             Assert.NotEmpty(result.Nodes.Where(item => item.Id == "6"));
@@ -56,74 +50,67 @@ namespace Census.FamilyTree.Test.Integration
         [Fact]
         public async Task TestPersonUpdateEventHandler()
         {
-            //Arrange
             await SetupData();
-            var handler = new PersonUpdatedEventHandler(PersonFamilyTreeRepository);
+            var handler = new PersonUpdatedEventHandler(_personFamilyTreeRepository);
             var @event = new PersonUpdatedEvent()
             {
                 OldPersonData = CreatePerson2(),
                 NewPersonData = CreatePerson3(),
             };
 
-            //Act
             await handler.Handle(@event);
 
-            //Assert
-            var result = await PersonFamilyTreeRepository.GetFamilyTree("3", 2);
+            var result = await _personFamilyTreeRepository.GetFamilyTree("3", 2);
             Assert.NotEmpty(result.Nodes.Where(item => item.Id == "5"));
             Assert.Empty(result.Nodes.Where(item => item.Id == "1"));
             Assert.Empty(result.Nodes.Where(item => item.Id == "2"));
         }
 
-
         [Fact]
         public async Task TestPersonDeleteEventHandler()
         {
-            //Arrange
             await SetupData();
-            var handler = new PersonDeletedEventHandler(PersonFamilyTreeRepository);
+            var handler = new PersonDeletedEventHandler(_personFamilyTreeRepository);
             var @event = new PersonDeletedEvent()
             {
                 Person = CreatePerson2(),
             };
 
-            //Act
             await handler.Handle(@event);
 
-            //Assert
-            var result = await PersonFamilyTreeRepository.GetFamilyTree("5", 2);
+            var result = await _personFamilyTreeRepository.GetFamilyTree("5", 2);
             Assert.Empty(result.Nodes.Where(item => item.Id == "3"));
 
-            result = await PersonFamilyTreeRepository.GetFamilyTree("1", 2);
+            result = await _personFamilyTreeRepository.GetFamilyTree("1", 2);
             Assert.Empty(result.Nodes.Where(item => item.Id == "3"));
 
-            result = await PersonFamilyTreeRepository.GetFamilyTree("2", 2);
+            result = await _personFamilyTreeRepository.GetFamilyTree("2", 2);
             Assert.Empty(result.Nodes.Where(item => item.Id == "3"));
-
         }
 
         private async Task SetupData()
         {
-            var client = await Connection.GetClient();
-            using (var transaction = client.BeginTransaction())
+            var client = await _connection.GetClient();
+            var txClient = (ITransactionalGraphClient)client;
+            using (var transaction = txClient.BeginTransaction())
             {
                 await client.Cypher.Match("(n:Person)").DetachDelete("n").ExecuteWithoutResultsAsync();
                 await transaction.CommitAsync();
             }
-                
-            await PersonFamilyTreeRepository.AddNode(new PersonFamilyTreeNode()
+
+            await _personFamilyTreeRepository.AddNode(new PersonFamilyTreeNode()
             {
                 Id = "1",
                 Name = "Cacionilha"
             });
 
-            await PersonFamilyTreeRepository.AddNode(new PersonFamilyTreeNode()
+            await _personFamilyTreeRepository.AddNode(new PersonFamilyTreeNode()
             {
                 Id = "2",
                 Name = "Murilo"
             });
 
-            await PersonFamilyTreeRepository.AddNode(new PersonFamilyTreeNode()
+            await _personFamilyTreeRepository.AddNode(new PersonFamilyTreeNode()
             {
                 Id = "3",
                 Name = "Vera",
@@ -131,13 +118,13 @@ namespace Census.FamilyTree.Test.Integration
                 FatherId = "2",
             });
 
-            await PersonFamilyTreeRepository.AddNode(new PersonFamilyTreeNode()
+            await _personFamilyTreeRepository.AddNode(new PersonFamilyTreeNode()
             {
                 Id = "4",
                 Name = "Hermano"
             });
 
-            await PersonFamilyTreeRepository.AddNode(new PersonFamilyTreeNode()
+            await _personFamilyTreeRepository.AddNode(new PersonFamilyTreeNode()
             {
                 Id = "5",
                 Name = "Lourenço",
@@ -199,6 +186,5 @@ namespace Census.FamilyTree.Test.Integration
                 FatherId = ""
             };
         }
-
     }
 }

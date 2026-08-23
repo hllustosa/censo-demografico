@@ -16,14 +16,11 @@ namespace Census.FamilyTree.Test.Integration
         private readonly IPersonFamilyTreeRepository _repository;
         private readonly INeo4jConnection _connection;
 
-        public TestGetFamilyTreeRepository()
+        public TestGetFamilyTreeRepository(Neo4jFixture fixture)
         {
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
-                .AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["Neo4j:Uri"] = Neo4jTestConfiguration.ResolveUri(),
-                })
+                .AddInMemoryCollection(fixture.ConfigurationOverrides())
                 .Build();
 
             _connection = new Neo4jConnection(configuration);

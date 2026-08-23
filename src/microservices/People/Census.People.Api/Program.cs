@@ -32,6 +32,7 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddTransient<IMongoConnection, MongoConnection>();
 builder.Services.AddTransient<IGuidGenerator, GuidGenerator>();
 builder.Services.AddTransient<IPersonRepository, PersonRepository>();
+builder.Services.AddTransient<ITransactionManager, MongoTransactionManager>();
 builder.Services.AddTransient<IOutboxStore, MongoOutboxStore>();
 builder.Services.AddTransient<IIntegrationEventPublisher, OutboxIntegrationEventPublisher>();
 builder.Services.AddHostedService<OutboxProcessor>();

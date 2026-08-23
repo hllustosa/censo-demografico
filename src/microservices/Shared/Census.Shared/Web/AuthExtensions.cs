@@ -13,7 +13,15 @@ public static class AuthExtensions
 {
     public static IServiceCollection AddCensusAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+        var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+            ?? throw new InvalidOperationException($"Configuration section '{JwtOptions.SectionName}' is required.");
+
+        if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey) || jwtOptions.SigningKey.Length < 32)
+        {
+            throw new InvalidOperationException(
+                "Jwt:SigningKey must be configured and at least 32 characters. Refusing to start with a missing or weak key.");
+        }
+
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

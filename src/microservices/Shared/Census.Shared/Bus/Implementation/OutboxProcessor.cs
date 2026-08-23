@@ -4,13 +4,19 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System.Diagnostics.Metrics;
 
 namespace Census.Shared.Bus.Implementation
 {
     public class OutboxProcessor : BackgroundService
     {
+        private static readonly Meter Meter = new("Census.Outbox");
+        private static readonly Counter<long> PublishedCounter = Meter.CreateCounter<long>("outbox_messages_published_total");
+        private static readonly Counter<long> FailedCounter = Meter.CreateCounter<long>("outbox_messages_failed_total");
+
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<OutboxProcessor> _logger;
+        private readonly string _ownerId = $"{Environment.MachineName}-{Guid.NewGuid():N}";
 
         public OutboxProcessor(IServiceScopeFactory scopeFactory, ILogger<OutboxProcessor> logger)
         {
@@ -28,13 +34,26 @@ namespace Census.Shared.Bus.Implementation
                     var outboxStore = scope.ServiceProvider.GetRequiredService<IOutboxStore>();
                     var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
 
-                    var messages = await outboxStore.GetUnpublishedAsync(20, stoppingToken);
+                    var messages = await outboxStore.ClaimUnpublishedAsync(
+                        batchSize: 20,
+                        ownerId: _ownerId,
+                        leaseDuration: TimeSpan.FromSeconds(30),
+                        stoppingToken);
+
                     foreach (var message in messages)
                     {
                         var eventType = Type.GetType(message.EventType);
                         if (eventType == null)
                         {
-                            _logger.LogWarning("Unknown outbox event type {EventType}", message.EventType);
+                            _logger.LogError(
+                                "Poison outbox message {MessageId}: unknown event type {EventType}",
+                                message.Id,
+                                message.EventType);
+                            await outboxStore.MarkAsFailedAsync(
+                                message.Id,
+                                $"Unknown event type: {message.EventType}",
+                                stoppingToken);
+                            FailedCounter.Add(1);
                             continue;
                         }
 
@@ -46,8 +65,21 @@ namespace Census.Shared.Bus.Implementation
                             CorrelationContext.CorrelationId = integrationEvent.CorrelationId;
                         }
 
-                        await eventBus.PublishAsync(integrationEvent, stoppingToken);
-                        await outboxStore.MarkAsPublishedAsync(message.Id, stoppingToken);
+                        try
+                        {
+                            await eventBus.PublishAsync(integrationEvent, stoppingToken);
+                            await outboxStore.MarkAsPublishedAsync(message.Id, stoppingToken);
+                            PublishedCounter.Add(1);
+                        }
+                        catch (Exception publishEx)
+                        {
+                            // Leave lease to expire so another iteration can retry.
+                            _logger.LogWarning(
+                                publishEx,
+                                "Failed to publish outbox message {MessageId}; will retry after lease expires",
+                                message.Id);
+                            FailedCounter.Add(1);
+                        }
                     }
                 }
                 catch (Exception ex)

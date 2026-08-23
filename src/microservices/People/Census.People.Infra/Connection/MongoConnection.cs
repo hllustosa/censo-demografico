@@ -16,6 +16,8 @@ namespace Census.People.Infra.Connection
             _mongoClient = new MongoClient(configuration.GetConnectionString("DefaultConnection"));
         }
 
+        public MongoClient GetClient() => _mongoClient;
+
         public IMongoDatabase GetDatabase() => _mongoClient.GetDatabase(MongoDatabase);
 
         public IMongoCollection<Person> GetPeopleCollection()

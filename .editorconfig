@@ -1,0 +1,13 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+charset = utf-8
+
+[*.{cs,csx}]
+dotnet_sort_system_directives_first = true
+
+[*.{json,yml,yaml,md}]
+indent_size = 2

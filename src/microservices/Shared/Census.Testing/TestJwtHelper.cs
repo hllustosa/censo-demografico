@@ -1,11 +1,13 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
+using Census.Shared.Auth;
 using Census.Shared.Web;
-using Microsoft.IdentityModel.Tokens;
 
-namespace Census.Shared.Auth;
+namespace Census.Testing;
 
+/// <summary>
+/// Test-only JWT helper. Do not reference from production assemblies.
+/// </summary>
 public static class TestJwtHelper
 {
     public const string DefaultSigningKey = "CensusDevSigningKeyMustBeAtLeast32CharsLong!";

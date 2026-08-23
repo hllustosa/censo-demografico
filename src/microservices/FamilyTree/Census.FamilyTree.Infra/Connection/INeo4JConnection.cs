@@ -5,6 +5,6 @@ namespace Census.FamilyTree.Infra.Connection
 {
     public interface INeo4jConnection
     {
-        Task<GraphClient> GetClient();
+        Task<IGraphClient> GetClient();
     }
 }

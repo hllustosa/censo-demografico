@@ -31,6 +31,7 @@
     <ProjectReference Include="..\Census.People.Application\Census.People.Application.csproj" />
     <ProjectReference Include="..\Census.People.Domain\Census.People.Domain.csproj" />
     <ProjectReference Include="..\Census.People.Infra\Census.People.Infra.csproj" />
+    <ProjectReference Include="..\..\Shared\Census.Testing\Census.Testing.csproj" />
   </ItemGroup>
 
 </Project>

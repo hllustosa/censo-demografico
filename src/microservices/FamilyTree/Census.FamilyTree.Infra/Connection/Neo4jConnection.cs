@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Neo4j.Driver;
 using Neo4jClient;
 using System;
 using System.Threading.Tasks;
@@ -8,24 +7,25 @@ namespace Census.FamilyTree.Infra.Connection
 {
     public class Neo4jConnection : INeo4jConnection
     {
-        public GraphClient GraphClient { get; set; }
+        private readonly BoltGraphClient _graphClient;
 
         public Neo4jConnection(IConfiguration configuration)
         {
             var neo4jConfig = configuration.GetSection("Neo4j");
-            var uri = neo4jConfig["Uri"];
-            var userName = neo4jConfig["Username"];
-            var password = neo4jConfig["Password"];
-            GraphClient = new GraphClient(new Uri(uri), userName, password);
-            
+            var uri = neo4jConfig["Uri"] ?? "bolt://localhost:7687";
+            var userName = neo4jConfig["Username"] ?? "neo4j";
+            var password = neo4jConfig["Password"] ?? throw new InvalidOperationException("Neo4j:Password is required.");
+            _graphClient = new BoltGraphClient(new Uri(uri), userName, password);
         }
 
-        public async Task<GraphClient> GetClient()
+        public async Task<IGraphClient> GetClient()
         {
-            if (!GraphClient.IsConnected)
-                await GraphClient.ConnectAsync();
+            if (!_graphClient.IsConnected)
+            {
+                await _graphClient.ConnectAsync();
+            }
 
-            return GraphClient;
+            return _graphClient;
         }
     }
 }

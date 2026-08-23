@@ -1,5 +1,6 @@
 using Census.People.Test.Utils;
 using Census.Shared.Auth;
+using Census.Testing;
 using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
@@ -10,9 +11,9 @@ public class TestContext
 {
     private readonly HttpClient _client;
 
-    public TestContext(params string[] roles)
+    public TestContext(MongoFixture mongoFixture, params string[] roles)
     {
-        var factory = new PeopleWebApplicationFactory();
+        var factory = new PeopleWebApplicationFactory(mongoFixture.ConnectionString);
         _client = factory.CreateClient();
         _client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", TestJwtHelper.CreateToken(roles.Length > 0 ? roles : [CensusRoles.Admin]));

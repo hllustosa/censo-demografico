@@ -95,14 +95,14 @@ namespace Census.FamilyTree.Infra.Repository
         }
 
         private static async Task UpsertPersonInternal(
-            GraphClient client,
+            IGraphClient client,
             PersonFamilyTreeNode personFamilyTreeNode)
         {
             await UpsertNode(client, personFamilyTreeNode);
             await EnsureRelationshipsFromProperties(client, personFamilyTreeNode);
         }
 
-        private static async Task UpsertNode(GraphClient client, PersonFamilyTreeNode node)
+        private static async Task UpsertNode(IGraphClient client, PersonFamilyTreeNode node)
         {
             var existing = await GetNodeById(client, node.Id);
             if (existing == null)
@@ -123,7 +123,7 @@ namespace Census.FamilyTree.Infra.Repository
                 .ExecuteWithoutResultsAsync();
         }
 
-        private static async Task CreateNode(GraphClient client, PersonFamilyTreeNode node)
+        private static async Task CreateNode(IGraphClient client, PersonFamilyTreeNode node)
         {
             await client.Cypher
                 .Create("(n:Person { Id: $id, Name: $name, FatherId: $fatherId, MotherId: $motherId })")
@@ -135,7 +135,7 @@ namespace Census.FamilyTree.Infra.Repository
         }
 
         private static async Task EnsureRelationshipsFromProperties(
-            GraphClient client,
+            IGraphClient client,
             PersonFamilyTreeNode node)
         {
             await CreateParentRelationship(client, node.FatherId, node.Id);
@@ -157,7 +157,7 @@ namespace Census.FamilyTree.Infra.Repository
             }
         }
 
-        private static async Task CreateParentRelationship(GraphClient client, string? idParent, string idChild)
+        private static async Task CreateParentRelationship(IGraphClient client, string? idParent, string idChild)
         {
             if (string.IsNullOrEmpty(idParent))
             {
@@ -172,7 +172,7 @@ namespace Census.FamilyTree.Infra.Repository
                 .ExecuteWithoutResultsAsync();
         }
 
-        private static async Task CreateChildRelationship(GraphClient client, string? idParent, string idChild)
+        private static async Task CreateChildRelationship(IGraphClient client, string? idParent, string idChild)
         {
             if (string.IsNullOrEmpty(idParent))
             {
@@ -187,7 +187,7 @@ namespace Census.FamilyTree.Infra.Repository
                 .ExecuteWithoutResultsAsync();
         }
 
-        private static async Task RemoveParentRelationships(GraphClient client, string parentId, string childId)
+        private static async Task RemoveParentRelationships(IGraphClient client, string parentId, string childId)
         {
             await client.Cypher
                 .Match("(a:Person { Id: $parentId })-[r:PARENT]->(b:Person { Id: $childId })")
@@ -204,7 +204,7 @@ namespace Census.FamilyTree.Infra.Repository
                 .ExecuteWithoutResultsAsync();
         }
 
-        private static async Task DeleteNode(GraphClient client, PersonFamilyTreeNode personFamilyTreeNode)
+        private static async Task DeleteNode(IGraphClient client, PersonFamilyTreeNode personFamilyTreeNode)
         {
             await client.Cypher
                 .Match("(a:Person)")
@@ -244,7 +244,7 @@ namespace Census.FamilyTree.Infra.Repository
         }
 
         private static async Task<Dictionary<string, PersonFamilyTreeNode>> CollectNodesWithinLevel(
-            GraphClient client,
+            IGraphClient client,
             PersonFamilyTreeNode root,
             uint level)
         {
@@ -321,7 +321,7 @@ namespace Census.FamilyTree.Infra.Repository
         }
 
         private static async Task IncludeCoParent(
-            GraphClient client,
+            IGraphClient client,
             Dictionary<string, PersonFamilyTreeNode> nodes,
             string? coParentId,
             string knownParentId)
@@ -344,7 +344,7 @@ namespace Census.FamilyTree.Infra.Repository
         }
 
         private static async Task<List<PersonFamilyTreeNode>> GetChildrenByParentId(
-            GraphClient client,
+            IGraphClient client,
             string parentId)
         {
             var results = await client.Cypher
@@ -361,7 +361,7 @@ namespace Census.FamilyTree.Infra.Repository
                 .ToList();
         }
 
-        private static async Task<PersonFamilyTreeNode?> GetNodeById(GraphClient client, string personId)
+        private static async Task<PersonFamilyTreeNode?> GetNodeById(IGraphClient client, string personId)
         {
             var results = await client.Cypher
                 .Match("(p:Person { Id: $personId })")

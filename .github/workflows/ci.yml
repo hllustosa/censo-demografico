@@ -21,10 +21,15 @@ jobs:
       - name: Restore
         run: dotnet restore CensoDemografico.sln
 
+      - name: Format check
+        run: dotnet format CensoDemografico.sln --verify-no-changes
+
       - name: Build
         run: dotnet build CensoDemografico.sln --configuration Release --no-restore
 
       - name: Test with coverage
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
         run: dotnet test CensoDemografico.sln --configuration Release --no-build --collect:"XPlat Code Coverage" --results-directory ./coverage
 
       - name: Upload coverage
@@ -48,6 +53,9 @@ jobs:
 
       - name: Build FamilyTree image
         run: docker build -f ./src/microservices/FamilyTree.Dockerfile ./src/microservices
+
+      - name: Build Identity image
+        run: docker build -f ./src/microservices/Identity.Dockerfile ./src/microservices
 
       - name: Build Frontend image
         run: docker build -f ./src/frontend/Census.WebApp/Dockerfile ./src/frontend/Census.WebApp

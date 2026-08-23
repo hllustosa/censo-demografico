@@ -9,11 +9,11 @@ namespace Census.People.Domain.Interfaces
 
         Task<Person> GetPersonById(string id);
 
-        Task Save(Person person);
+        Task Save(Person person, ITransaction? transaction = null);
 
-        Task Update(Person person);
+        Task Update(Person person, ITransaction? transaction = null);
 
-        Task Delete(string id);
+        Task Delete(string id, ITransaction? transaction = null);
 
         Task<bool> IsAncestorOf(string ancestorId, string descendantId);
     }

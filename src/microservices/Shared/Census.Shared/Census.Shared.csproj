@@ -33,4 +33,8 @@
     <PackageReference Include="Serilog.Formatting.Compact" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Census.Contracts\Census.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

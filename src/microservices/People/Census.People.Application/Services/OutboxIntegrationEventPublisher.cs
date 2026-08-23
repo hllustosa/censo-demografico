@@ -1,13 +1,17 @@
 using Census.Shared.Bus;
 using Census.Shared.Bus.Interfaces;
 using Census.Shared.Observability;
+using Census.People.Domain.Interfaces;
 using Newtonsoft.Json;
 
 namespace Census.People.Application.Services
 {
     public interface IIntegrationEventPublisher
     {
-        Task PublishAsync(IntegrationEvent integrationEvent, CancellationToken cancellationToken = default);
+        Task PublishAsync(
+            IntegrationEvent integrationEvent,
+            ITransaction? transaction = null,
+            CancellationToken cancellationToken = default);
     }
 
     public class OutboxIntegrationEventPublisher : IIntegrationEventPublisher
@@ -19,7 +23,10 @@ namespace Census.People.Application.Services
             _outboxStore = outboxStore;
         }
 
-        public Task PublishAsync(IntegrationEvent integrationEvent, CancellationToken cancellationToken = default)
+        public Task PublishAsync(
+            IntegrationEvent integrationEvent,
+            ITransaction? transaction = null,
+            CancellationToken cancellationToken = default)
         {
             integrationEvent.CorrelationId ??= CorrelationContext.EnsureCorrelationId();
 
@@ -30,7 +37,12 @@ namespace Census.People.Application.Services
                 CorrelationId = integrationEvent.CorrelationId
             };
 
-            return _outboxStore.SaveAsync(message, cancellationToken);
+            if (transaction is null)
+            {
+                return _outboxStore.SaveAsync(message, cancellationToken);
+            }
+
+            return _outboxStore.SaveAsync(message, transaction, cancellationToken);
         }
     }
 }

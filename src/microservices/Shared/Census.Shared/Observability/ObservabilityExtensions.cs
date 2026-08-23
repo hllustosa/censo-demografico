@@ -46,6 +46,7 @@ namespace Census.Shared.Observability
                         .AddHttpClientInstrumentation()
                         .AddRuntimeInstrumentation()
                         .AddMeter(EventBusMetrics.MeterName)
+                        .AddMeter("Census.Outbox")
                         .AddPrometheusExporter();
 
                     if (!string.IsNullOrWhiteSpace(otlpEndpoint))

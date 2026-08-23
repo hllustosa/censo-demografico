@@ -1,231 +1,150 @@
 # Censo Demografico
 
-Reference implementation of an event-driven microservices architecture for demographic census management.
+Distributed systems and software architecture showcase implemented through a demographic census domain.
 
 [![CI](https://github.com/hllustosa/censo-demografico/actions/workflows/ci.yml/badge.svg)](https://github.com/hllustosa/censo-demografico/actions/workflows/ci.yml)
 
-## Project Overview
+This project is a hands-on exploration of distributed systems, built around a demographic census domain. It uses microservices, event-driven integration, and polyglot persistence to make architectural choices visible and concrete — so you can study how services own their data, communicate asynchronously, and stay observable in practice.
 
-This system manages citizen census data across three independent services:
+## Project overview
 
-- **People** — source of truth for citizen CRUD (MongoDB)
-- **Statistics** — aggregated demographic counters with real-time dashboard updates (MongoDB + SignalR)
-- **FamilyTree** — genealogical graph queries (Neo4j)
+This reference system manages citizen census data across independent services:
 
-Services communicate asynchronously via RabbitMQ integration events. Each service owns its data; downstream services maintain eventually consistent read models.
+- **People** — source of truth for citizen CRUD (MongoDB + transactional outbox)
+- **Statistics** — aggregated demographic counters with SignalR updates (MongoDB)
+- **FamilyTree** — genealogical graph queries (Neo4j 5.x over Bolt)
+- **Identity** — authentication and JWT issuance (MongoDB)
 
-## Architecture
+Services communicate asynchronously through RabbitMQ integration events. Downstream services maintain eventually consistent read models.
+
+## Why this project exists
+
+Built to explore and demonstrate:
+
+- microservice boundaries and data ownership
+- synchronous edge traffic + asynchronous integration events
+- polyglot persistence
+- dual-write avoidance (transactional outbox)
+- idempotent consumers, retries, and dead-letter queues
+- OpenTelemetry-based observability
+- practical DevOps (Compose, Make, CI)
+
+## Architecture overview
 
 ```mermaid
 flowchart TB
-    Browser[React SPA]
-    Nginx[nginx Gateway :8080]
-    People[People API :5001]
-    Stats[Statistics API :5003]
-    Family[FamilyTree API :5002]
-    MongoPeople[(MongoDB peopledb)]
-    MongoStats[(MongoDB statsdb)]
-    Neo4j[(Neo4j)]
-    RabbitMQ[RabbitMQ census exchange]
+  Browser[React SPA]
+  Nginx[nginx Gateway :8080]
+  Identity[Identity]
+  People[People]
+  Stats[Statistics]
+  Family[FamilyTree]
+  MongoP[(MongoDB people)]
+  MongoS[(MongoDB stats)]
+  MongoI[(MongoDB identity)]
+  Neo4j[(Neo4j 5.x)]
+  RabbitMQ[RabbitMQ]
 
-    Browser --> Nginx
-    Nginx --> People
-    Nginx --> Stats
-    Nginx --> Family
-    People --> MongoPeople
-    Stats --> MongoStats
-    Family --> Neo4j
-    People -->|Outbox + Events| RabbitMQ
-    RabbitMQ --> Stats
-    RabbitMQ --> Family
+  Browser --> Nginx
+  Nginx --> Identity
+  Nginx --> People
+  Nginx --> Stats
+  Nginx --> Family
+  People --> MongoP
+  Stats --> MongoS
+  Identity --> MongoI
+  Family --> Neo4j
+  People -->|transactional outbox| RabbitMQ
+  RabbitMQ --> Stats
+  RabbitMQ --> Family
 ```
 
-## Services
+Full write-up: [docs/architecture.md](docs/architecture.md) · ADRs: [docs/adr](docs/adr)
 
-| Service | Responsibility | Database | Port | Health |
-|---------|----------------|----------|------|--------|
-| **Identity** | Auth, users, JWT | MongoDB | 5004 | `/health`, `/health/ready` |
-| People | CRUD, event publishing via outbox | MongoDB | 5001 | `/health`, `/health/ready` |
-| Statistics | Counters, SignalR notifications | MongoDB | 5003 | `/health`, `/health/ready` |
-| FamilyTree | Family tree queries | Neo4j | 5002 | `/health`, `/health/ready` |
-| Frontend | Vite + React 18 + TypeScript + Ant Design (nginx gateway) | — | 8080 | `/` |
-| RabbitMQ Management | Broker admin UI | — | 15672 | — |
-| Neo4j Browser | Graph explorer | — | 7474 | — |
+## Architectural decisions (summary)
 
-## Authentication & Roles
+| Decision | Why |
+|----------|-----|
+| Microservices | Clear ownership for a distributed-systems showcase |
+| RabbitMQ events | Decouple read models; demonstrate eventual consistency |
+| MongoDB | Document model for people/counters/identity |
+| Neo4j | Graph queries for family relationships |
+| Transactional outbox | Avoid dual-write between Mongo and the broker |
+| nginx gateway | Single SPA entrypoint without adding YARP for optics |
 
-All APIs (exceto login/refresh) exigem JWT Bearer. Login via gateway:
+## Trade-offs
 
-```http
-POST http://localhost:8080/auth/api/v1/auth/login
-{ "email": "admin@censo.local", "password": "Admin@12345" }
+```text
+Benefits
+  Clear boundaries, independent persistence, realistic async patterns
+
+Costs
+  More moving parts than a modular monolith for the same domain
+
+Operational complexity
+  Compose, replica set, broker, polyglot stores, telemetry stack
+
+Eventual consistency
+  Dashboards and trees lag the People write briefly
+
+Distributed debugging
+  Requires correlation ids, traces, and disciplined logs
+
+Message duplication
+  At-least-once delivery → idempotent consumers
+
+Failure handling
+  Retries, leases on outbox, DLQ for poison messages
 ```
 
-| Role | Permissões |
-|------|------------|
-| **Registrar** | CRUD pessoas, visualizar árvore genealógica |
-| **Analyst** | Dashboard e estatísticas (incl. SignalR) |
-| **Admin** | Tudo + gestão de usuários |
+## How to run
 
-Swagger (Development): `http://localhost:5004/swagger`, `http://localhost:5001/swagger`, etc.
+```bash
+cp .env.example .env   # DEVELOPMENT ONLY defaults
+make up
+make urls
+```
 
-## Services (detalhe)
+Application: http://localhost:8080
 
-### People Service
-
-- **Inputs:** HTTP REST (`/api/v1/person`)
-- **Outputs:** Integration events via transactional outbox
-- **Events produced:** `PersonCreatedEvent`, `PersonUpdatedEvent`, `PersonDeletedEvent`
-
-### Statistics Service
-
-- **Inputs:** HTTP REST (`/api/personcategory`, `/api/percitycategory`), RabbitMQ events
-- **Outputs:** SignalR push (`/hubs/notification`)
-- **Events consumed:** All person lifecycle events
-
-### FamilyTree Service
-
-- **Inputs:** HTTP REST (`/api/familytree/{id}`), RabbitMQ events
-- **Events consumed:** All person lifecycle events
-
-## Reliability
-
-| Pattern | Implementation |
-|---------|----------------|
-| **Transactional Outbox** | People saves events to MongoDB outbox; background processor publishes to RabbitMQ |
-| **Idempotency** | Consumers track `IntegrationEvent.Id` in processed-events store |
-| **Retries** | Up to 3 attempts with `x-retry-count` header |
-| **Dead Letter Queue** | Exchange `census.dlx`, per-service `{queue}.dlq` |
-| **Eventual Consistency** | Statistics and FamilyTree are read models updated asynchronously |
-
-## Observability
-
-- **Logs:** Structured JSON via Serilog (correlation ID, service name, trace ID)
-- **Traces:** OpenTelemetry → Jaeger (with observability profile)
-- **Metrics:** Prometheus endpoint `/metrics` on each service
-
-Enable the observability stack:
+Observability profile:
 
 ```bash
 make observability
 ```
 
-| Tool | URL |
-|------|-----|
-| Grafana | http://localhost:3000 (admin/admin) |
-| Prometheus | http://localhost:9090 |
-| Jaeger | http://localhost:16686 |
-
-## Running Locally
-
-**Prerequisites:** Docker, Docker Compose, and Make
-
-### Option A — Dev Container (recommended)
-
-1. Open the project in VS Code / Cursor
-2. **Reopen in Container** (uses [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json))
-3. Inside the container:
-
-```bash
-make up
-make urls
-```
-
-The dev container includes .NET 8 SDK, Node 20, and Docker CLI (via host socket).
-
-### Option B — Local machine
-
-```bash
-git clone https://github.com/hllustosa/censo-demografico.git
-cd censo-demografico
-make up
-make urls
-```
-
-Open http://localhost:8080
-
-### Makefile targets
-
-Run `make help` for the full list. Common commands:
-
-| Command | Description |
-|---------|-------------|
-| `make up` | Start full stack (build + detached) |
-| `make down` | Stop containers |
-| `make logs` | Follow container logs |
-| `make test` | Run `dotnet test` |
-| `make build` | Build .NET solution |
-| `make observability` | Start stack with Grafana/Jaeger/Prometheus |
-| `make urls` | Print service URLs |
-| `make seed-people` | Seed ~100 test people (API + family links) |
-
-### Seed test data
-
-With the stack running (`make up`), populate MongoDB, statistics, and Neo4j via the People API:
-
-```bash
-make seed-people
-```
-
-Optional env vars: `CENSUS_COUNT`, `CENSUS_BASE_URL`, `CENSUS_EMAIL`, `CENSUS_PASSWORD`, `CENSUS_REQUEST_MS` (delay between creates; default `700` to stay under the API rate limit).
-
-Example:
-
-```bash
-CENSUS_COUNT=50 make seed-people
-```
-
-### Service Endpoints (via gateway)
-
-| Path | Target |
-|------|--------|
-| `/auth/api/v1/auth/login` | Identity login |
-| `/person/api/v1/person` | People CRUD |
-| `/stats/api/v1/personcategory` | Statistics by category |
-| `/stats/api/v1/percitycategory` | Statistics by city |
-| `/family/api/v1/familytree/{id}` | Family tree query |
-| `/stats/signair/` | SignalR WebSocket |
-
 ## Testing
 
 ```bash
 make test
+make test-unit
+make test-integration
 ```
 
-Or directly:
+Details: [docs/testing.md](docs/testing.md)
 
-```bash
-dotnet test CensoDemografico.sln
-```
+## Observability
 
-Test projects:
+OpenTelemetry traces/metrics, Prometheus, Grafana (provisioned dashboard), Jaeger.
 
-- **Unit tests** — command handlers, validators (People, Statistics)
-- **Integration tests** — MongoDB/Neo4j with Testcontainers
+See [docs/observability.md](docs/observability.md).
 
-## CI/CD
+## Security notes
 
-GitHub Actions workflows in `.github/workflows/`:
+- Secrets live in `.env` (never commit real production secrets)
+- JWT signing key is mandatory at startup (min length enforced)
+- Demo credentials in `.env.example` are **DEVELOPMENT ONLY**
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `ci.yml` | push, PR | Build, test, coverage, Docker build |
-| `security.yml` | push, PR, weekly | CodeQL, dependency review, Trivy container scan |
-| `release.yml` | tag `v*` | Build, push to GHCR, GitHub Release |
+More: [docs/security.md](docs/security.md)
 
-## Technology Stack
+## Documentation map
 
-- .NET 8, ASP.NET Core, MediatR, FluentValidation
-- MongoDB, Neo4j, RabbitMQ
-- Vite, React 18, TypeScript, Ant Design, TanStack Query, React Router, Zustand
-- nginx gateway
-- OpenTelemetry, Serilog, Prometheus, Grafana, Jaeger
-- Docker Compose, GitHub Actions, Makefile
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and conventions.
-
-## License
-
-Licensed under the MIT License. See [LICENSE](LICENSE).
+| Doc | Content |
+|-----|---------|
+| [docs/architecture.md](docs/architecture.md) | System design |
+| [docs/events.md](docs/events.md) | Integration event catalog |
+| [docs/local-development.md](docs/local-development.md) | DX / Make targets |
+| [docs/observability.md](docs/observability.md) | Tracing, metrics, dashboards |
+| [docs/testing.md](docs/testing.md) | Test strategy |
+| [docs/adr](docs/adr) | Architecture Decision Records |
+| [docs/FINDINGS.md](docs/FINDINGS.md) | Initial audit findings |

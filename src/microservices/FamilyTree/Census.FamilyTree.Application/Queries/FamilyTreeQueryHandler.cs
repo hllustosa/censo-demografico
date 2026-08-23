@@ -1,5 +1,4 @@
-﻿using Census.FamilyTree.Application.Services;
-using Census.FamilyTree.Domain.Entities;
+﻿using Census.FamilyTree.Domain.Entities;
 using Census.FamilyTree.Domain.Repository;
 using MediatR;
 using System.Threading;
@@ -9,32 +8,17 @@ namespace Census.FamilyTree.Application.Queries
 {
     public class FamilyTreeQueryHandler : IRequestHandler<FamilyTreeQuery, PersonFamilyTree>
     {
-        IPersonFamilyTreeRepository PersonFamilyTreeRepository { get; set; }
-        IPersonGraphSyncService PersonGraphSyncService { get; set; }
+        private readonly IPersonFamilyTreeRepository _personFamilyTreeRepository;
 
-        public FamilyTreeQueryHandler(
-            IPersonFamilyTreeRepository personFamilyTreeRepository,
-            IPersonGraphSyncService personGraphSyncService)
+        public FamilyTreeQueryHandler(IPersonFamilyTreeRepository personFamilyTreeRepository)
         {
-            PersonFamilyTreeRepository = personFamilyTreeRepository;
-            PersonGraphSyncService = personGraphSyncService;
+            _personFamilyTreeRepository = personFamilyTreeRepository;
         }
 
-        public async Task<PersonFamilyTree> Handle(FamilyTreeQuery request, CancellationToken cancellationToken)
+        public Task<PersonFamilyTree> Handle(FamilyTreeQuery request, CancellationToken cancellationToken)
         {
-            try
-            {
-                await PersonGraphSyncService.SyncPersonSubtreeAsync(
-                    request.PersonId,
-                    request.Level,
-                    cancellationToken);
-            }
-            catch
-            {
-                // Keep serving Neo4j data when People sync is unavailable.
-            }
-
-            return await PersonFamilyTreeRepository.GetFamilyTree(request.PersonId, request.Level);
+            // Neo4j is updated only via RabbitMQ integration events (eventual consistency).
+            return _personFamilyTreeRepository.GetFamilyTree(request.PersonId, request.Level);
         }
     }
 }

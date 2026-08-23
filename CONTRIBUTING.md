@@ -48,28 +48,35 @@ Run `make help` for all available targets.
 | `make build` | Build .NET solution |
 | `make restore` | Restore NuGet packages |
 | `make test` | Run all tests |
+| `make test-unit` | Run unit tests |
+| `make test-integration` | Run integration tests |
+| `make lint` | Verify formatting |
+| `make format` | Apply formatting |
 | `make clean` | Stop containers and clean .NET artifacts |
 | `make observability` | Start stack with Grafana/Jaeger/Prometheus |
 | `make front-build` | Build React frontend |
 | `make urls` | Print service URLs |
+| `make seed-people` | Seed sample people via gateway |
 
 ## Configuration
 
 Environment variables follow ASP.NET Core convention. Docker Compose sets them automatically for containerized services.
 
-For local overrides, copy `.env.example` to `.env` (or run `make env`). Never commit `.env`.
+For local overrides, copy `.env.example` to `.env` (or run `make env`). Never commit `.env`. Demo values are **DEVELOPMENT ONLY**.
 
 ```bash
-ConnectionStrings__DefaultConnection=mongodb://guest:guest@mongo:27017/?authSource=admin
+ConnectionStrings__DefaultConnection=mongodb://guest:guest@mongo:27017/?authSource=admin&replicaSet=rs0
 RabbitMqConnection__HostName=rabbitmq
 RabbitMqConnection__QueueName=statistics
-Neo4j__Uri=http://neo4j:7474/db/data
+Neo4j__Uri=bolt://neo4j:7687
 ```
 
 ## Testing
 
 ```bash
 make test
+make test-unit
+make test-integration
 ```
 
 Integration tests use [Testcontainers](https://dotnet.testcontainers.org/) — Docker must be running (available in the dev container via the host socket).
@@ -77,8 +84,9 @@ Integration tests use [Testcontainers](https://dotnet.testcontainers.org/) — D
 ## Architecture Guidelines
 
 - Each microservice owns its database; no cross-service DB access
-- Integration events flow through RabbitMQ; no HTTP between services
+- Integration events flow through RabbitMQ; **no HTTP between services**
 - People publishes via transactional outbox; consumers must be idempotent
+- See [docs/](docs/) and [docs/adr/](docs/adr/) for architecture documentation
 
 ## Pull Requests
 

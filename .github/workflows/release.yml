@@ -41,11 +41,13 @@ jobs:
           docker build -f ./src/microservices/People.Dockerfile -t $REGISTRY/census-people:$VERSION ./src/microservices
           docker build -f ./src/microservices/Statistics.Dockerfile -t $REGISTRY/census-statistics:$VERSION ./src/microservices
           docker build -f ./src/microservices/FamilyTree.Dockerfile -t $REGISTRY/census-familytree:$VERSION ./src/microservices
+          docker build -f ./src/microservices/Identity.Dockerfile -t $REGISTRY/census-identity:$VERSION ./src/microservices
           docker build -f ./src/frontend/Census.WebApp/Dockerfile -t $REGISTRY/census-front:$VERSION ./src/frontend/Census.WebApp
 
           docker push $REGISTRY/census-people:$VERSION
           docker push $REGISTRY/census-statistics:$VERSION
           docker push $REGISTRY/census-familytree:$VERSION
+          docker push $REGISTRY/census-identity:$VERSION
           docker push $REGISTRY/census-front:$VERSION
 
       - name: Create GitHub Release

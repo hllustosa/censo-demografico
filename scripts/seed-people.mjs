@@ -8,21 +8,56 @@
  *   make seed-people
  *
  * Env:
- *   CENSUS_BASE_URL   default http://localhost:8080
+ *   CENSUS_BASE_URL   default: probe localhost, then host.docker.internal (Dev Containers)
  *   CENSUS_EMAIL      default admin@censo.local
  *   CENSUS_PASSWORD   default Admin@12345
  *   CENSUS_COUNT      default 100
  *   CENSUS_REQUEST_MS delay between creates (default 700; stays under API rate limit)
  */
 
-const BASE_URL = (process.env.CENSUS_BASE_URL ?? "http://localhost:8080").replace(/\/$/, "");
 const EMAIL = process.env.CENSUS_EMAIL ?? "admin@censo.local";
 const PASSWORD = process.env.CENSUS_PASSWORD ?? "Admin@12345";
 const TOTAL = Math.max(1, Number.parseInt(process.env.CENSUS_COUNT ?? "100", 10));
 const REQUEST_GAP_MS = Math.max(0, Number.parseInt(process.env.CENSUS_REQUEST_MS ?? "700", 10));
 const MAX_RETRIES = 8;
 
+/** @type {string} */
+let BASE_URL = (process.env.CENSUS_BASE_URL ?? "").replace(/\/$/, "");
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function resolveBaseUrl() {
+  if (BASE_URL) {
+    return BASE_URL;
+  }
+
+  // In Dev Containers / nested Docker, Compose publishes ports on the Docker host,
+  // not on the workspace container's loopback — host.docker.internal usually works.
+  const candidates = [
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
+    "http://host.docker.internal:8080",
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      const response = await fetch(candidate, {
+        method: "GET",
+        signal: AbortSignal.timeout(2500),
+      });
+      if (response.ok || (response.status >= 300 && response.status < 500)) {
+        return candidate;
+      }
+    } catch {
+      // try next
+    }
+  }
+
+  throw new Error(
+    "Cannot reach the gateway on port 8080. Start the stack with `make up`, then retry. " +
+      "From a Dev Container you can force: CENSUS_BASE_URL=http://host.docker.internal:8080 make seed-people"
+  );
+}
 
 const SEX = ["M", "F"];
 const RACES = ["Branco(a)", "Pardo(a)", "Negro(a)", "Amarelo(a)", "Indígena", "Não Informada"];
@@ -193,6 +228,7 @@ function planGenerations(total) {
 }
 
 async function main() {
+  BASE_URL = await resolveBaseUrl();
   console.log(`Seeding ${TOTAL} people via ${BASE_URL} ...`);
   if (REQUEST_GAP_MS > 0) {
     console.log(`Pacing: ${REQUEST_GAP_MS}ms between creates (override with CENSUS_REQUEST_MS).`);

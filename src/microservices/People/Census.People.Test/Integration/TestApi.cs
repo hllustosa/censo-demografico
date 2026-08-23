@@ -1,20 +1,20 @@
-using System;
-using System.Threading.Tasks;
 using Census.People.Application.Commands;
 using Census.People.Domain.Entities;
 using Census.People.Domain.Values;
 using Census.People.Test.Utils;
-using FluentValidation;
 using Newtonsoft.Json;
 using Xunit;
 
+namespace Census.People.Test.Integration;
+
+[Collection("PeopleIntegration")]
 public class TestApi
 {
-    TestContext TestContext { get; set; }
+    private readonly TestContext _testContext;
 
-    public TestApi()
+    public TestApi(MongoFixture mongoFixture)
     {
-        TestContext = new TestContext();
+        _testContext = new TestContext(mongoFixture);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class TestApi
     private async Task CreatePerson()
     {
         var createPersonCommand = MakeCreateCommand();
-        var result = await TestContext.Post("/api/v1/person", createPersonCommand);
+        var result = await _testContext.Post("/api/v1/person", createPersonCommand);
         var resultString = await result.Content.ReadAsStringAsync();
         var createdPerson = JsonConvert.DeserializeObject<CreatedPerson>(resultString);
         Assert.Equal(new CreatedPerson() { Id = "id" }, createdPerson);
@@ -55,35 +55,32 @@ public class TestApi
     private async Task UpdatePerson()
     {
         var updatePersonCommand = MakeUpdateCommand();
-        var result = await TestContext.Put("/api/v1/person/id", updatePersonCommand);
-        Assert.Equal(System.Net.HttpStatusCode.OK, result.StatusCode);
+        var result = await _testContext.Put("/api/v1/person/id", updatePersonCommand);
+        Assert.Equal(System.Net.HttpStatusCode.NoContent, result.StatusCode);
     }
 
     private async Task DeletePerson()
     {
-        try
-        {
-            var result = await TestContext.Delete("/api/v1/person/id");
-            Assert.Equal(System.Net.HttpStatusCode.NoContent, result.StatusCode);
-        }
-        catch(ValidationException) {}
+        var result = await _testContext.Delete("/api/v1/person/id");
+        // Cleanup may run before the person exists.
+        Assert.True(
+            result.StatusCode is System.Net.HttpStatusCode.NoContent or System.Net.HttpStatusCode.NotFound,
+            $"Unexpected delete status: {result.StatusCode}");
     }
 
     private async Task CheckRetrievedPerson(Person expected)
     {
-        var result = await TestContext.Get("/api/v1/person/id");
+        var result = await _testContext.Get("/api/v1/person/id");
+        Assert.Equal(System.Net.HttpStatusCode.OK, result.StatusCode);
         var resultString = await result.Content.ReadAsStringAsync();
         var person = JsonConvert.DeserializeObject<Person>(resultString);
         Assert.Equal(expected, person);
     }
 
-    private async Task<bool> CheckEmptyRetrievedPerson()
+    private async Task CheckEmptyRetrievedPerson()
     {
-        var result = await TestContext.Get("/api/v1/person/id");
-        var resultString = await result.Content.ReadAsStringAsync();
-        var person = JsonConvert.DeserializeObject<Person>(resultString);
-        Assert.Null(person);
-        return true;
+        var result = await _testContext.Get("/api/v1/person/id");
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, result.StatusCode);
     }
 
     private Person CreatePersonObject()

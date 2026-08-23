@@ -14,10 +14,25 @@ namespace Census.People.Test.Unit
         private readonly CreatePersonHandler _createPersonHandler;
         private readonly Mock<IPersonRepository> _personRepository = new();
         private readonly Mock<IIntegrationEventPublisher> _eventPublisher = new();
+        private readonly Mock<ITransactionManager> _transactionManager = new();
+        private readonly Mock<ITransaction> _transaction = new();
 
         public TestCreatePersonCommand()
         {
-            _createPersonHandler = new CreatePersonHandler(_personRepository.Object, _eventPublisher.Object);
+            _transactionManager
+                .Setup(x => x.BeginTransactionAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(_transaction.Object);
+            _transactionManager
+                .Setup(x => x.CommitAsync(It.IsAny<ITransaction>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+            _transactionManager
+                .Setup(x => x.RollbackAsync(It.IsAny<ITransaction>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            _createPersonHandler = new CreatePersonHandler(
+                _personRepository.Object,
+                _eventPublisher.Object,
+                _transactionManager.Object);
         }
 
         [Fact]
@@ -30,6 +45,7 @@ namespace Census.People.Test.Unit
             var result = await _createPersonHandler.Handle(command, CancellationToken.None);
 
             Assert.NotNull(result);
+            _transactionManager.Verify(x => x.CommitAsync(_transaction.Object, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -68,7 +84,9 @@ namespace Census.People.Test.Unit
 
         private void SetupSave()
         {
-            _personRepository.Setup(x => x.Save(It.IsAny<Person>())).Returns(Task.CompletedTask);
+            _personRepository
+                .Setup(x => x.Save(It.IsAny<Person>(), It.IsAny<ITransaction?>()))
+                .Returns(Task.CompletedTask);
         }
 
         private static CreatePersonCommand CreatePersonCommand()
@@ -82,7 +100,7 @@ namespace Census.People.Test.Unit
                 FatherId = "1",
                 MotherId = "2",
                 Address = new Address()
-                { 
+                {
                     City = "City",
                 }
             };
